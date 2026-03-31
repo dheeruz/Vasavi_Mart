@@ -5,6 +5,16 @@ import { useCart } from '../context/CartContext';
 import { useOrders } from '../context/OrderContext';
 import './Checkout.css';
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 const Checkout: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { placeOrder } = useOrders();
@@ -12,7 +22,7 @@ const Checkout: React.FC = () => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('online');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -35,30 +45,112 @@ const Checkout: React.FC = () => {
   const shipping = totalPrice > 500 ? 0 : 50;
   const finalTotal = totalPrice + tax + shipping;
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    
-    // Simulate secure payment processing API call
-    setTimeout(() => {
-      placeOrder({
-        customer: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          address: formData.address,
-          city: formData.city,
-          zipCode: formData.zipCode
-        },
-        items: items,
-        total: finalTotal,
-        paymentMethod: paymentMethod
-      });
 
+    if (paymentMethod === 'cod') {
+      // Direct placement for Cash On Delivery
+      finishOrderPlacement();
+      return;
+    }
+
+    // Razorpay Integration Flow
+    const isLoaded = await loadRazorpayScript();
+    if (!isLoaded) {
+      alert('Razorpay SDK failed to load. Are you online?');
       setIsProcessing(false);
-      setIsSuccess(true);
-      clearCart();
-    }, 2000);
+      return;
+    }
+
+    try {
+      // 1. Create order on backend securely
+      const result = await fetch('/api/payment/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: finalTotal }),
+      });
+      
+      if (!result.ok) throw new Error("Failed to connect to backend");
+
+      const { orderId, amount, currency, keyId } = await result.json();
+
+      // 2. Open Razorpay Checktout Modal
+      const options = {
+        key: keyId,
+        amount: amount.toString(),
+        currency: currency,
+        name: 'Vasavi Mart',
+        description: 'Grocery Purchase',
+        // image: 'https://example.com/logo.png',
+        order_id: orderId,
+        handler: async function (response: any) {
+          try {
+            // 3. Verify Signature securely on backend
+            const verifyRes = await fetch('/api/payment/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyResult = await verifyRes.json();
+            if (verifyResult.verified) {
+              finishOrderPlacement();
+            } else {
+              alert('Payment Verification Failed!');
+            }
+          } catch (e) {
+             console.error('Verify error', e);
+             alert('Error verifying payment');
+          }
+        },
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          contact: '9999999999' // Demo contact
+        },
+        theme: {
+          color: '#2F8F4C',
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.on('payment.failed', function (response: any) {
+        alert("Payment Failed. Reason: " + response.error.description);
+      });
+      
+      paymentObject.open();
+
+    } catch (error) {
+       console.error(error);
+       alert("Server error processing payment");
+    } finally {
+       setIsProcessing(false);
+    }
+  };
+
+  const finishOrderPlacement = () => {
+    placeOrder({
+      customer: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        zipCode: formData.zipCode
+      },
+      items: items,
+      total: finalTotal,
+      paymentMethod: paymentMethod === 'online' ? 'Razorpay' : 'Cash on Delivery'
+    });
+
+    setIsProcessing(false);
+    setIsSuccess(true);
+    clearCart();
   };
 
   if (isSuccess) {
@@ -144,18 +236,10 @@ const Checkout: React.FC = () => {
                 <ShieldCheck size={16} /> All transactions are secure and encrypted.
               </div>
 
-              <div className="payment-method-selector">
-                <label className={`payment-option ${paymentMethod === 'upi' ? 'selected' : ''}`}>
-                  <input type="radio" name="paymentOption" value="upi" checked={paymentMethod === 'upi'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                  <span>UPI / QR</span>
-                </label>
-                <label className={`payment-option ${paymentMethod === 'card' ? 'selected' : ''}`}>
-                  <input type="radio" name="paymentOption" value="card" checked={paymentMethod === 'card'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                  <span>Credit / Debit Card</span>
-                </label>
-                <label className={`payment-option ${paymentMethod === 'netbanking' ? 'selected' : ''}`}>
-                  <input type="radio" name="paymentOption" value="netbanking" checked={paymentMethod === 'netbanking'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                  <span>Net Banking</span>
+              <div className="payment-method-selector" style={{ gridTemplateColumns: '1fr' }}>
+                <label className={`payment-option ${paymentMethod === 'online' ? 'selected' : ''}`}>
+                  <input type="radio" name="paymentOption" value="online" checked={paymentMethod === 'online'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                  <span>Pay Online (UPI, Cards, NetBanking via Razorpay)</span>
                 </label>
                 <label className={`payment-option ${paymentMethod === 'cod' ? 'selected' : ''}`}>
                   <input type="radio" name="paymentOption" value="cod" checked={paymentMethod === 'cod'} onChange={(e) => setPaymentMethod(e.target.value)} />
@@ -163,77 +247,10 @@ const Checkout: React.FC = () => {
                 </label>
               </div>
 
-              {paymentMethod === 'card' && (
+              {paymentMethod === 'online' && (
                 <div className="form-grid">
-                  <div className="input-group full-width">
-                    <label>Card Number</label>
-                    <input 
-                      type="text" 
-                      name="cardNumber" 
-                      placeholder="0000 0000 0000 0000" 
-                      maxLength={19}
-                      required={paymentMethod === 'card'} 
-                      onChange={handleChange} 
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label>Expiry Date (MM/YY)</label>
-                    <input 
-                      type="text" 
-                      name="expiry" 
-                      placeholder="MM/YY" 
-                      maxLength={5}
-                      required={paymentMethod === 'card'} 
-                      onChange={handleChange} 
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label>CVC</label>
-                    <input 
-                      type="text" 
-                      name="cvc" 
-                      placeholder="123" 
-                      maxLength={4}
-                      required={paymentMethod === 'card'} 
-                      onChange={handleChange} 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === 'upi' && (
-                <div className="form-grid">
-                  <div className="input-group full-width">
-                    <label>Enter UPI ID (VPA)</label>
-                    <input 
-                      type="text" 
-                      name="upiId" 
-                      placeholder="mobile_number@upi or name@okbank" 
-                      required={paymentMethod === 'upi'} 
-                      onChange={handleChange} 
-                    />
-                    <small className="help-text">A payment request will be sent to your UPI app. Please approve it within 5 minutes.</small>
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === 'netbanking' && (
-                <div className="form-grid">
-                  <div className="input-group full-width">
-                    <label>Select Your Bank</label>
-                    <select 
-                      name="bank" 
-                      className="bank-select" 
-                      required={paymentMethod === 'netbanking'} 
-                      onChange={() => {}}
-                    >
-                      <option value="">Choose a bank...</option>
-                      <option value="sbi">State Bank of India (SBI)</option>
-                      <option value="hdfc">HDFC Bank</option>
-                      <option value="icici">ICICI Bank</option>
-                      <option value="axis">Axis Bank</option>
-                      <option value="kotak">Kotak Mahindra Bank</option>
-                    </select>
+                  <div className="input-group full-width cod-notice">
+                    <p>You will be securely redirected to Razorpay to complete your payment.</p>
                   </div>
                 </div>
               )}
