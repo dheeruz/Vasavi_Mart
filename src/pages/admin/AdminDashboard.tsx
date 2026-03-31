@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, PackageSearch, Trash2 } from 'lucide-react';
 import { useOrders } from '../../context/OrderContext';
@@ -18,16 +18,6 @@ const AdminDashboard: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('isAdmin');
     navigate('/admin');
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'Pending': return <span className="badge badge-warning">Pending</span>;
-      case 'Shipped': return <span className="badge badge-info">Shipped</span>;
-      case 'Delivered': return <span className="badge badge-success">Delivered</span>;
-      case 'Cancelled': return <span className="badge badge-danger">Cancelled</span>;
-      default: return <span className="badge">{status}</span>;
-    }
   };
 
   return (
@@ -64,7 +54,7 @@ const AdminDashboard: React.FC = () => {
             </thead>
             <tbody>
               {orders.map((order) => (
-                <React.Fragment key={order.id}>
+                <Fragment key={order.id}>
                   <tr className="order-row">
                     <td className="font-mono">{order.id}</td>
                     <td>{new Date(order.date).toLocaleDateString()} {new Date(order.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
@@ -112,7 +102,7 @@ const AdminDashboard: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                </React.Fragment>
+                </Fragment>
               ))}
             </tbody>
           </table>
