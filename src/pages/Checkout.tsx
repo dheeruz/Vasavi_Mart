@@ -71,7 +71,14 @@ const Checkout: React.FC = () => {
         body: JSON.stringify({ amount: finalTotal }),
       });
       
-      if (!result.ok) throw new Error("Failed to connect to backend");
+      if (!result.ok) {
+        let errMsg = "Failed to connect to backend";
+        try {
+           const errData = await result.json();
+           if (errData.error) errMsg = errData.error;
+        } catch(e) {}
+        throw new Error((result.status === 404 ? "API Route Not Found (404) " : "") + errMsg);
+      }
 
       const { orderId, amount, currency, keyId } = await result.json();
 
@@ -125,9 +132,9 @@ const Checkout: React.FC = () => {
       
       paymentObject.open();
 
-    } catch (error) {
+    } catch (error: any) {
        console.error(error);
-       alert("Server error processing payment");
+       alert("Payment Error: " + error.message);
     } finally {
        setIsProcessing(false);
     }
