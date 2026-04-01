@@ -54,6 +54,10 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("Error creating order:", error);
-    res.status(500).json({ error: error.message || 'Internal Server Error' });
+    
+    // Razorpay SDK often returns errors as objects without a traditional .message property
+    const errMsg = error?.error?.description || error?.message || JSON.stringify(error) || 'Internal Server Error';
+    
+    res.status(500).json({ error: errMsg });
   }
 }
