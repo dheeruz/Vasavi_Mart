@@ -97,7 +97,7 @@ const AdminCustomers: React.FC = () => {
         const existing = db.find((u: any) => u.email === c.email);
         const nameParts = c.name.split(' ');
         
-        const userData = {
+        return {
           id: c.id,
           name: nameParts[0],
           lastName: nameParts.slice(1).join(' '),
@@ -108,10 +108,8 @@ const AdminCustomers: React.FC = () => {
           ordersCount: c.orders,
           totalSpent: c.totalSpent,
           role: existing ? existing.role : 'user',
-          pass: existing ? existing.pass : 'user123' // Default pass for new ones added via Admin
+          pass: existing ? existing.pass : 'user123'
         };
-        
-        return userData;
       });
 
       localStorage.setItem('vasavi_users_db', JSON.stringify(newDB));
@@ -126,7 +124,7 @@ const AdminCustomers: React.FC = () => {
 
   const toggleStatus = (id: string) => {
     const updated = customers.map(c => 
-      c.id === id ? { ...c, status: c.status === 'Active' ? 'Blocked' : 'Active' } : c
+      c.id === id ? { ...c, status: (c.status === 'Active' ? 'Blocked' : 'Active') as 'Active' | 'Blocked' } : c
     );
     saveToDB(updated);
   };
@@ -161,7 +159,7 @@ const AdminCustomers: React.FC = () => {
     let updated: Customer[];
     if (editingCustomer) {
       updated = customers.map(c => 
-        c.id === editingCustomer.id ? { ...c, ...formData } : c
+        c.id === editingCustomer.id ? { ...c, ...formData } as Customer : c
       );
     } else {
       const newCustomer: Customer = {

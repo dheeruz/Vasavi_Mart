@@ -37,8 +37,6 @@ const Signup: React.FC = () => {
       await signup(name, email, password);
       
       // Trigger Notification
-      const savedNotifications = localStorage.getItem('admin_notifications');
-      const notificationPrefs = savedNotifications ? JSON.parse(savedNotifications) : { customers: true };
       const savedProfile = localStorage.getItem('admin_profile');
       const adminProfile = savedProfile ? JSON.parse(savedProfile) : { email: 'admin@vasavimart.com' };
 

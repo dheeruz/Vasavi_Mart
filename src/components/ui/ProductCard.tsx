@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShoppingCart, Plus } from 'lucide-react';
-import type { Product } from '../../data/mockProducts';
+import type { Product } from '../../types/product';
 import { useCart } from '../../context/CartContext';
 import './ProductCard.css';
 
