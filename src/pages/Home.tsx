@@ -2,11 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Leaf, Truck, ShieldCheck } from 'lucide-react';
 import ProductCard from '../components/ui/ProductCard';
-import { mockProducts } from '../data/mockProducts';
+import { useProducts } from '../context/ProductContext';
 import './Home.css';
 
 const Home: React.FC = () => {
-  const featuredProducts = mockProducts.slice(0, 4);
+  const { products } = useProducts();
+  const featuredProducts = products.slice(0, 4);
 
   return (
     <div className="home-page">

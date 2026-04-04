@@ -1,0 +1,54 @@
+.legal-page {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Legal Hero */
+.legal-hero {
+  padding: 60px 0;
+  background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+  text-align: center;
+}
+
+.legal-hero h1 {
+  font-size: 3rem;
+  margin-bottom: 8px;
+}
+
+.legal-hero p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* Legal Content Card */
+.legal-card {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  padding: 60px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.legal-card h2 {
+  font-size: 1.5rem;
+  margin: 32px 0 16px;
+  color: var(--text-dark);
+}
+
+.legal-card h2:first-child {
+  margin-top: 0;
+}
+
+.legal-card p {
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin-bottom: 16px;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 768px) {
+  .legal-card {
+    padding: 32px;
+  }
+}

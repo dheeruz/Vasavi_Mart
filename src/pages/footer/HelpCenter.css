@@ -1,0 +1,198 @@
+.help-center-page {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Search Hero */
+.help-hero {
+  padding: 100px 0;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  text-align: center;
+  color: white;
+}
+
+.help-hero h1 {
+  font-size: 3.5rem;
+  margin-bottom: 40px;
+  color: white;
+}
+
+.search-bar-wrapper {
+  max-width: 700px;
+  margin: 0 auto;
+  position: relative;
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-lg);
+}
+
+.search-icon {
+  color: var(--text-light);
+}
+
+.search-bar-wrapper input {
+  flex: 1;
+  border: none;
+  padding: 16px 0;
+  font-size: 1.125rem;
+  background: transparent;
+  color: var(--text-dark);
+}
+
+.search-bar-wrapper input:focus {
+  outline: none;
+}
+
+/* Category Grid */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+}
+
+.category-card {
+  background: white;
+  padding: 40px 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.cat-icon-box {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+.category-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: var(--text-dark);
+}
+
+.category-card p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.learn-more-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+/* FAQ Accordion Styling */
+.faq-accordion-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-accordion-item {
+  background: white;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.faq-question {
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.faq-question.active {
+  color: var(--primary-color);
+  background-color: var(--primary-light);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+.faq-answer.show {
+  max-height: 200px;
+  border-top: 1px solid var(--border-color);
+}
+
+.faq-answer p {
+  padding: 24px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Help CTA */
+.support-cta-card {
+  background: white;
+  padding: 60px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.support-cta-card h2 {
+  font-size: 2.25rem;
+  margin: 24px 0 12px;
+}
+
+.support-cta-card p {
+  color: var(--text-muted);
+  margin-bottom: 40px;
+}
+
+.support-cta-btns {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .help-hero h1 {
+    font-size: 2.25rem;
+  }
+  
+  .support-cta-btns {
+    flex-direction: column;
+  }
+  
+  .support-cta-btns .btn {
+    width: 100%;
+  }
+}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Filter } from 'lucide-react';
 import ProductCard from '../components/ui/ProductCard';
-import { mockProducts } from '../data/mockProducts';
+import { useProducts } from '../context/ProductContext';
 import './Shop.css';
 
 const categories = [
@@ -16,10 +16,11 @@ const categories = [
 ];
 
 const Shop: React.FC = () => {
+  const { products } = useProducts();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredProducts = mockProducts.filter(product => {
+  const filteredProducts = products.filter(product => {
     const matchesCategory = activeCategory === 'All' || product.category === activeCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;

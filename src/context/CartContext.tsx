@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Product } from '../data/mockProducts';
+import type { Product } from './ProductContext';
 
 export interface CartItem extends Product {
   quantity: number;

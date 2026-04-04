@@ -1,0 +1,83 @@
+.order-tracking-timeline {
+  padding: 1.5rem 1rem 1.5rem 2.5rem;
+  background-color: #fcfcfc;
+  border-top: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 31px;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  width: 2px;
+  background-color: #e0e0e0;
+}
+
+.timeline-event {
+  position: relative;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.timeline-event:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-point {
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  border: 2px solid white;
+  z-index: 1;
+}
+
+.timeline-point-active {
+  background-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.timeline-status {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #212121;
+}
+
+.timeline-date {
+  font-size: 0.75rem;
+  color: #878787;
+}
+
+.timeline-message {
+  font-size: 0.85rem;
+  color: #616161;
+  margin-top: 0.25rem;
+}
+
+.track-order-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2874f0;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  width: 100%;
+  justify-content: flex-start;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+.track-order-btn:hover {
+  background-color: #f8fafc;
+}

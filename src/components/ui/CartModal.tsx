@@ -16,7 +16,7 @@ const CartModal: React.FC<CartModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <>
+    <div className="cart-modal-wrapper">
       <div className="modal-overlay" onClick={onClose} />
       <div className="cart-drawer slide-in-right">
         <div className="cart-header">
@@ -83,7 +83,7 @@ const CartModal: React.FC<CartModalProps> = ({ isOpen, onClose }) => {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 

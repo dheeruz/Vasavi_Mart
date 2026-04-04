@@ -1,11 +1,19 @@
-import { useEffect, Fragment } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, PackageSearch, Trash2 } from 'lucide-react';
+import { 
+  ShoppingBag, 
+  DollarSign, 
+  CheckCircle,
+  Clock
+} from 'lucide-react';
 import { useOrders } from '../../context/OrderContext';
+import AdminLayout from '../../components/admin/AdminLayout';
+import StatsCard from '../../components/admin/StatsCard';
+import DashboardCharts from '../../components/admin/DashboardCharts';
 import './Admin.css';
 
 const AdminDashboard: React.FC = () => {
-  const { orders, updateOrderStatus, deleteOrder } = useOrders();
+  const { orders } = useOrders();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,100 +23,89 @@ const AdminDashboard: React.FC = () => {
     }
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAdmin');
-    navigate('/admin');
-  };
+  // Stats Calculations
+  const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
+  const pendingOrders = orders.filter(o => o.status === 'Pending').length;
+  const deliveredOrders = orders.filter(o => o.status === 'Delivered').length;
 
   return (
-    <div className="admin-dashboard container animate-fade-in">
-      <div className="admin-header">
-        <div>
-          <h1>Store Owner Dashboard</h1>
-          <p>Manage incoming customer orders</p>
+    <AdminLayout>
+      <div className="dashboard-content animate-fade-in">
+        <div className="welcome-section" style={{ marginBottom: '32px' }}>
+           <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '8px' }}>Store Overview</h2>
+           <p style={{ color: 'var(--admin-text-secondary)' }}>Welcome back, Dheeraj. Here's what's happening with your store today.</p>
         </div>
-        <button onClick={handleLogout} className="btn outline logout-btn">
-          <LogOut size={18} /> Logout
-        </button>
-      </div>
 
-      {orders.length === 0 ? (
-        <div className="empty-orders">
-          <PackageSearch size={64} color="var(--text-muted)" />
-          <h2>No orders yet</h2>
-          <p>When customers check out, their orders will appear here.</p>
+        <div className="stats-grid">
+          <StatsCard 
+            title="Total Revenue" 
+            value={`₹${totalRevenue.toLocaleString()}`} 
+            icon={<DollarSign size={24} />} 
+            iconBg="#10b981"
+            trend="+12.5%"
+            increasing={true}
+          />
+          <StatsCard 
+            title="Total Orders" 
+            value={orders.length.toString()} 
+            icon={<ShoppingBag size={24} />} 
+            iconBg="#3b82f6"
+            trend="+8.2%"
+            increasing={true}
+          />
+          <StatsCard 
+            title="Pending Orders" 
+            value={pendingOrders.toString()} 
+            icon={<Clock size={24} />} 
+            iconBg="#f59e0b"
+            trend="-2.4%"
+            increasing={false}
+          />
+          <StatsCard 
+            title="Delivered" 
+            value={deliveredOrders.toString()} 
+            icon={<CheckCircle size={24} />} 
+            iconBg="#22c55e"
+            trend="+15.3%"
+            increasing={true}
+          />
         </div>
-      ) : (
-        <div className="orders-table-container">
-          <table className="orders-table">
+
+        <DashboardCharts />
+
+        <div className="table-container animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="table-header">
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Recent Activity</h3>
+            <button className="icon-btn" onClick={() => navigate('/admin/orders')}>View All Orders</button>
+          </div>
+
+          <table className="admin-table">
             <thead>
               <tr>
                 <th>Order ID</th>
-                <th>Date</th>
                 <th>Customer</th>
-                <th>Payment</th>
                 <th>Total</th>
                 <th>Status</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
-                <Fragment key={order.id}>
-                  <tr className="order-row">
-                    <td className="font-mono">{order.id}</td>
-                    <td>{new Date(order.date).toLocaleDateString()} {new Date(order.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                    <td>
-                      <strong>{order.customer.firstName} {order.customer.lastName}</strong><br/>
-                      <small className="text-muted">{order.customer.email}</small>
-                    </td>
-                    <td className="capitalize">{order.paymentMethod}</td>
-                    <td className="font-bold">₹{order.total.toFixed(2)}</td>
-                    <td>
-                      <select 
-                        value={order.status} 
-                        onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
-                        className={`status-select ${order.status.toLowerCase()}`}
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Delivered">Delivered</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
-                    </td>
-                    <td>
-                      <button onClick={() => deleteOrder(order.id)} className="btn-icon delete-btn" title="Delete Order">
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                  <tr className="order-details-row">
-                    <td colSpan={7}>
-                      <div className="order-items-grid">
-                        <div className="shipping-address">
-                          <strong>Shipping Address:</strong><br />
-                          {order.customer.address}, {order.customer.city} {order.customer.zipCode}
-                        </div>
-                        <div className="purchased-items">
-                          <strong>Items Purchased:</strong>
-                          <ul>
-                            {order.items.map((item, idx) => (
-                              <li key={idx}>
-                                {item.quantity}x {item.name} <span className="item-price">(₹{(item.price * item.quantity).toFixed(2)})</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </Fragment>
+              {orders.slice(0, 5).map((order) => (
+                <tr key={order.id}>
+                  <td style={{ fontFamily: 'monospace', color: 'var(--admin-primary)', fontWeight: 600 }}>#{order.id.slice(-6)}</td>
+                  <td>{order.customer.firstName} {order.customer.lastName}</td>
+                  <td style={{ fontWeight: 700 }}>₹{order.total.toFixed(2)}</td>
+                  <td>
+                    <span className={`status-badge status-${order.status.toLowerCase()}`}>
+                       {order.status}
+                    </span>
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

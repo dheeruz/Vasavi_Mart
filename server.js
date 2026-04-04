@@ -3,11 +3,21 @@ import cors from 'cors';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
+import { registerNotification } from './server/controllers/authController.js';
+import { orderNotification } from './server/controllers/orderController.js';
+
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Request logger middleware
+app.use((req, res, next) => {
+  console.log(`[API Request] ${req.method} ${req.url}`);
+  next();
+});
 
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'dummy_key_id';
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'dummy_api_secret';
@@ -17,19 +27,27 @@ const razorpay = new Razorpay({
   key_secret: RAZORPAY_KEY_SECRET,
 });
 
+// Email Service Helper Routes
+app.post('/api/auth/register-notify', registerNotification);
+app.post('/api/order/place-notify', orderNotification);
+
 app.post('/api/payment/order', async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, receipt } = req.body;
     if (!amount) return res.status(400).json({ error: 'Amount is required' });
 
     if (RAZORPAY_KEY_ID === 'dummy_key_id') {
       return res.status(500).json({ error: 'Server configuration error: Razorpay keys are missing from Setup' });
     }
 
+    // Convert to Paise precisely
+    const amountInPaise = Math.round(Number(amount) * 100);
+    console.log(`[Payment] Creating order for ₹${amount} (${amountInPaise} Paise)`);
+
     const options = {
-      amount: Math.round(amount * 100), 
+      amount: amountInPaise, 
       currency: "INR",
-      receipt: `receipt_order_${Math.floor(Math.random() * 10000)}`,
+      receipt: receipt || `receipt_order_${Math.floor(Math.random() * 10000)}`,
     };
 
     const order = await razorpay.orders.create(options);

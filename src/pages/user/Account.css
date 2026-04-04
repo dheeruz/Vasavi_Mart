@@ -1,0 +1,407 @@
+.account-container {
+  padding: 2rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100vh - 160px);
+  background-color: #f1f3f6;
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* Sidebar Styling */
+.account-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-profile-header {
+  background: white;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .08);
+}
+
+.user-avatar-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #2874f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.user-welcome {
+  display: flex;
+  flex-direction: column;
+}
+
+.welcome-text {
+  font-size: 0.75rem;
+  color: #878787;
+}
+
+.user-full-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212121;
+}
+
+.sidebar-menu {
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .08);
+  overflow: hidden;
+}
+
+.menu-group {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-group:last-child {
+  border-bottom: none;
+}
+
+.menu-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  color: #878787;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.menu-header-active {
+  color: #2874f0;
+}
+
+.menu-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  padding: 0.75rem 1rem 0.75rem 3.5rem;
+  color: #212121;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f5faff;
+  color: #2874f0;
+}
+
+.menu-item-active {
+  background-color: #f5faff;
+  color: #2874f0;
+  font-weight: 600;
+}
+
+.logout-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  color: #212121;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logout-menu-item:hover {
+  color: #2874f0;
+}
+
+/* Content Area Styling */
+.account-content {
+  flex: 1;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .08);
+  padding: 2rem;
+  min-height: 500px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #212121;
+}
+
+.edit-link {
+  color: #2874f0;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+/* Profile Form styling */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 600px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group-full {
+  grid-column: span 2;
+}
+
+.profile-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-input-wrapper label {
+  font-size: 0.875rem;
+  color: black;
+}
+
+.profile-input {
+  padding: 0.75rem 1rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 2px;
+  font-size: 0.9rem;
+  background-color: #fafafa;
+}
+
+.profile-input:focus {
+  outline: none;
+  border-color: #2874f0;
+  background-color: white;
+}
+
+.profile-input:disabled {
+  color: #212121;
+  cursor: default;
+}
+
+.gender-selection {
+  display: flex;
+  gap: 2rem;
+  margin-top: 5px;
+  color: black;
+}
+
+.gender-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.gender-radio {
+  width: 18px;
+  height: 18px;
+}
+
+.save-button {
+  background-color: #2874f0;
+  color: white;
+  padding: 0.75rem 3rem;
+  border: none;
+  border-radius: 2px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  width: fit-content;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .2);
+}
+
+.save-button:hover {
+  background-color: #1259cc;
+}
+
+/* FAQ Section */
+.faq-section {
+  margin-top: 4rem;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 2rem;
+}
+
+.faq-title {
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #212121;
+}
+
+.faq-item {
+  margin-bottom: 1.5rem;
+}
+
+.faq-q {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: #212121;
+}
+
+.faq-a {
+  font-size: 0.875rem;
+  color: #212121;
+  line-height: 1.4;
+}
+
+.account-actions {
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.action-link {
+  color: #2874f0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delete-link {
+  color: #ff6161;
+}
+
+/* Address Management */
+.address-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.address-card {
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,.05);
+}
+
+.address-type-badge {
+  background: #f1f3f6;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 2px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #878787;
+  text-transform: uppercase;
+}
+
+.addr-name-row {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.addr-mobile {
+  margin-left: 1rem;
+  color: #878787;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.addr-details {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #212121;
+}
+
+.delete-addr-btn {
+  color: #ff6161;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-weight: 600;
+  padding: 8px;
+}
+
+.delete-addr-btn:hover {
+  text-decoration: underline;
+}
+
+.address-form-container {
+  border: 1px solid #e0e0e0;
+  padding: 1.5rem;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.address-form textarea {
+  width: 100%;
+}
+
+.cancel-button {
+  background: white;
+  border: 1px solid #d4d4d4;
+  padding: 10px 24px;
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: 2px;
+}
+
+.cancel-button:hover {
+  background: #f1f1f1;
+}
+
+.address-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem;
+  border: 2px dashed #e0e0e0;
+  border-radius: 4px;
+  color: #878787;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .account-container {
+    flex-direction: column;
+  }
+
+  .account-sidebar {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group-full {
+    grid-column: span 1;
+  }
+}

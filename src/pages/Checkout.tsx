@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CreditCard, CheckCircle, ShieldCheck, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { CreditCard, CheckCircle, ShieldCheck, MapPin, Truck, ChevronRight, X, PlusCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useOrders } from '../context/OrderContext';
+import { useAuth, type AddressItem } from '../context/AuthContext';
+import { useProducts } from '../context/ProductContext';
 import './Checkout.css';
 
 const loadRazorpayScript = () => {
@@ -18,16 +20,20 @@ const loadRazorpayScript = () => {
 const Checkout: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { placeOrder } = useOrders();
+  const { products, updateProduct } = useProducts();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('online');
+  const [showAddressSelector, setShowAddressSelector] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    address: '',
+    firstName: user?.name || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    address: user?.address || '',
     city: '',
     zipCode: '',
     cardNumber: '',
@@ -37,20 +43,46 @@ const Checkout: React.FC = () => {
     bank: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Auto-fill on load for single address users
+  useEffect(() => {
+    if (user && user.addresses && user.addresses.length > 0) {
+      if (user.addresses.length === 1) {
+        handleSelectAddress(user.addresses[0]);
+      } else {
+        const defaultAddr = user.addresses.find(a => a.isDefault);
+        if (defaultAddr) handleSelectAddress(defaultAddr);
+      }
+    }
+  }, [user]);
+
+  const handleSelectAddress = (addr: AddressItem) => {
+    const fullNameParts = addr.name.split(' ');
+    setFormData({
+      ...formData,
+      firstName: fullNameParts[0] || user?.name || '',
+      lastName: fullNameParts.slice(1).join(' ') || user?.lastName || '',
+      email: user?.email || '',
+      address: addr.street,
+      city: addr.city,
+      zipCode: addr.zipCode
+    });
+    setShowAddressSelector(false);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const tax = totalPrice * 0.08;
+  // Precise financial calculations to prevent floating point errors
+  const tax = Math.round(totalPrice * 0.08 * 100) / 100;
   const shipping = totalPrice > 500 ? 0 : 50;
-  const finalTotal = totalPrice + tax + shipping;
+  const finalTotal = Math.round((totalPrice + tax + shipping) * 100) / 100;
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
     if (paymentMethod === 'cod') {
-      // Direct placement for Cash On Delivery
       finishOrderPlacement();
       return;
     }
@@ -68,7 +100,10 @@ const Checkout: React.FC = () => {
       const result = await fetch('/api/payment/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: finalTotal }),
+        body: JSON.stringify({ 
+          amount: finalTotal,
+          receipt: `rcpt_${Math.floor(Date.now() / 1000)}` 
+        }),
       });
       
       if (!result.ok) {
@@ -80,7 +115,7 @@ const Checkout: React.FC = () => {
         throw new Error((result.status === 404 ? "API Route Not Found (404) " : "") + errMsg);
       }
 
-      const { orderId, amount, currency, keyId } = await result.json();
+      const { orderId: rzpOrderId, amount, currency, keyId } = await result.json();
 
       // 2. Open Razorpay Checktout Modal
       const options = {
@@ -89,8 +124,7 @@ const Checkout: React.FC = () => {
         currency: currency,
         name: 'Vasavi Mart',
         description: 'Grocery Purchase',
-        // image: 'https://example.com/logo.png',
-        order_id: orderId,
+        order_id: rzpOrderId,
         handler: async function (response: any) {
           try {
             // 3. Verify Signature securely on backend
@@ -118,7 +152,7 @@ const Checkout: React.FC = () => {
         prefill: {
           name: `${formData.firstName} ${formData.lastName}`,
           email: formData.email,
-          contact: '9999999999' // Demo contact
+          contact: '9999999999' 
         },
         theme: {
           color: '#2F8F4C',
@@ -140,19 +174,34 @@ const Checkout: React.FC = () => {
     }
   };
 
-  const finishOrderPlacement = () => {
-    placeOrder({
+  const finishOrderPlacement = async () => {
+    const orderData = {
       customer: {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        email: formData.email,
+        email: user?.email || formData.email,
         address: formData.address,
         city: formData.city,
         zipCode: formData.zipCode
       },
       items: items,
+      subtotal: totalPrice,
+      tax: tax,
+      shipping: shipping,
       total: finalTotal,
       paymentMethod: paymentMethod === 'online' ? 'Razorpay' : 'Cash on Delivery'
+    };
+
+    const orderId = placeOrder(orderData);
+    setPlacedOrderId(orderId);
+
+    // Update Inventory/Stock
+    items.forEach(item => {
+      const product = products.find(p => p.id === item.id);
+      if (product && typeof product.stock === 'number') {
+        const newStock = Math.max(0, product.stock - item.quantity);
+        updateProduct(product.id, { stock: newStock });
+      }
     });
 
     setIsProcessing(false);
@@ -164,12 +213,22 @@ const Checkout: React.FC = () => {
     return (
       <div className="checkout-success container animate-fade-in">
         <div className="success-content">
-          <CheckCircle size={80} color="var(--success)" className="success-icon" />
-          <h1>Payment Successful!</h1>
-          <p>Thank you for shopping at Vasavi Mart.</p>
+          <div className="success-icon-wrapper">
+             <CheckCircle size={80} color="var(--success)" className="success-icon" />
+          </div>
+          <h1>{paymentMethod === 'cod' ? 'Order Placed Successfully!' : 'Payment Successful!'}</h1>
+          <p>
+            {paymentMethod === 'cod' 
+              ? 'Thank you for your order. Please keep the cash ready for when our delivery partner arrives!' 
+              : 'Thank you for shopping at Vasavi Mart. Your payment has been confirmed.'}
+          </p>
           <div className="order-details">
-            <p><strong>Order Number:</strong> #{Math.floor(100000 + Math.random() * 900000)}</p>
+            <p><strong>Order Number:</strong> #{placedOrderId || 'ORD-SYNCING'}</p>
             <p><strong>Shipping to:</strong> {formData.firstName} {formData.lastName}, {formData.address}, {formData.city}</p>
+            <p className="mt-2 text-emerald-600 font-medium flex items-center justify-center gap-2">
+              {paymentMethod === 'cod' ? <Truck size={18} /> : <ShieldCheck size={18} />}
+              Total Amount: ₹{finalTotal.toFixed(2)}
+            </p>
           </div>
           <button className="btn btn-primary" onClick={() => navigate('/shop')}>
             Continue Shopping
@@ -201,34 +260,52 @@ const Checkout: React.FC = () => {
           <form id="checkout-form" onSubmit={handlePayment}>
             {/* Shipping Info */}
             <div className="form-group-section">
-              <div className="section-title">
-                <MapPin size={24} color="var(--primary-color)" />
-                <h2>Shipping Information</h2>
+              <div className="section-title justify-between">
+                <div className="flex items-center gap-3">
+                  <MapPin size={24} color="var(--primary-color)" />
+                  <h2>Shipping Information</h2>
+                </div>
+                {user && user.addresses && user.addresses.length > 0 && (
+                  <button 
+                    type="button" 
+                    className="change-addr-btn"
+                    onClick={() => setShowAddressSelector(true)}
+                  >
+                    Change
+                  </button>
+                )}
               </div>
+              
+              {user && user.addresses && user.addresses.length > 0 && (
+                <div className="saved-addr-badge animate-fade-in">
+                  <ShieldCheck size={14} /> Using saved address
+                </div>
+              )}
+
               <div className="form-grid">
                 <div className="input-group">
                   <label>First Name</label>
-                  <input type="text" name="firstName" required onChange={handleChange} />
+                  <input type="text" name="firstName" value={formData.firstName} required onChange={handleChange} />
                 </div>
                 <div className="input-group">
                   <label>Last Name</label>
-                  <input type="text" name="lastName" required onChange={handleChange} />
+                  <input type="text" name="lastName" value={formData.lastName} required onChange={handleChange} />
                 </div>
                 <div className="input-group full-width">
                   <label>Email Address</label>
-                  <input type="email" name="email" required onChange={handleChange} />
+                  <input type="email" name="email" value={formData.email} required onChange={handleChange} />
                 </div>
                 <div className="input-group full-width">
                   <label>Street Address</label>
-                  <input type="text" name="address" required onChange={handleChange} />
+                  <input type="text" name="address" value={formData.address} required onChange={handleChange} />
                 </div>
                 <div className="input-group">
                   <label>City</label>
-                  <input type="text" name="city" required onChange={handleChange} />
+                  <input type="text" name="city" value={formData.city} required onChange={handleChange} />
                 </div>
                 <div className="input-group">
                   <label>ZIP/Postal Code</label>
-                  <input type="text" name="zipCode" required onChange={handleChange} />
+                  <input type="text" name="zipCode" value={formData.zipCode} required onChange={handleChange} />
                 </div>
               </div>
             </div>
@@ -314,11 +391,50 @@ const Checkout: React.FC = () => {
               className="btn btn-primary w-full pay-btn"
               disabled={isProcessing}
             >
-              {isProcessing ? 'Processing Payment...' : `Pay ₹${finalTotal.toFixed(2)}`}
+              {isProcessing 
+                ? 'Processing...' 
+                : paymentMethod === 'cod' 
+                  ? `Place Order (₹${finalTotal.toFixed(2)})` 
+                  : `Pay ₹${finalTotal.toFixed(2)}`}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Address Selector Modal */}
+      {showAddressSelector && (
+        <div className="address-modal-overlay animate-fade-in">
+          <div className="address-modal animate-slide-down">
+            <div className="modal-header">
+              <h3>Select Shipping Address</h3>
+              <button type="button" className="close-modal" onClick={() => setShowAddressSelector(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="address-options-grid">
+                {user?.addresses?.map((addr) => (
+                  <div key={addr.id} className="address-option-card" onClick={() => handleSelectAddress(addr)}>
+                    <div className="addr-card-header">
+                      <span className="addr-type">{addr.type}</span>
+                      {addr.isDefault && <span className="default-tag">Default</span>}
+                      <ChevronRight size={16} className="addr-arrow" />
+                    </div>
+                    <p className="addr-name">{addr.name}</p>
+                    <p className="addr-text">{addr.street}, {addr.city}</p>
+                    <p className="addr-text">{addr.state} - {addr.zipCode}</p>
+                    <button type="button" className="use-addr-btn">Use this address</button>
+                  </div>
+                ))}
+                <Link to="/account" className="add-new-addr-card">
+                   <PlusCircle size={32} />
+                   <span>Add New Address</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
