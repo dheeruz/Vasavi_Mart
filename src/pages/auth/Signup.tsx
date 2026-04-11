@@ -37,16 +37,10 @@ const Signup: React.FC = () => {
       await signup(name, email, password);
       
       // Trigger Notification
-      const savedProfile = localStorage.getItem('admin_profile');
-      const adminProfile = savedProfile ? JSON.parse(savedProfile) : { email: 'admin@vasavimart.com' };
-
-      fetch('/api/auth/register-notify', {
+      fetch('/api/notify/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userData: { name, email }, 
-          adminEmail: adminProfile.email 
-        })
+        body: JSON.stringify({ name, email })
       }).catch(err => console.error('Signup notification failed', err));
       
       // Navigation handled inside context

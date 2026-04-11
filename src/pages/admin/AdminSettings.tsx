@@ -43,19 +43,18 @@ const AdminSettings: React.FC = () => {
   const sendTestEmail = async () => {
     setIsTesting(true);
     try {
-      const response = await fetch('/api/admin/test-email', {
+      const response = await fetch('/api/notify/test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: profile.email })
+        headers: { 'Content-Type': 'application/json' }
       });
       const data = await response.json();
-      if (data.success) {
+      if (response.ok) {
         alert('Test email sent! Please check your inbox.');
       } else {
-        alert('Failed to send test email: ' + data.message);
+        alert('Failed to send test email: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
-      alert('Error connecting to server. Make sure backend is running.');
+      alert('Error connecting to notification server. Please try again.');
     } finally {
       setIsTesting(false);
     }

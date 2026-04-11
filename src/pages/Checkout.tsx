@@ -195,12 +195,29 @@ const Checkout: React.FC = () => {
     const orderId = placeOrder(orderData);
     setPlacedOrderId(orderId);
 
-    // Update Inventory/Stock
+    // Send Admin Notification
+    const fullOrder = { ...orderData, id: orderId };
+    fetch('/api/notify/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order: fullOrder })
+    }).catch(err => console.error('Order notification failed', err));
+
+    // Update Inventory/Stock & Check for Low Stock
     items.forEach(item => {
       const product = products.find(p => p.id === item.id);
       if (product && typeof product.stock === 'number') {
         const newStock = Math.max(0, product.stock - item.quantity);
         updateProduct(product.id, { stock: newStock });
+
+        // Low Stock Alert (Stock < 5)
+        if (newStock < 5) {
+          fetch('/api/notify/low-stock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product: { ...product, stock: newStock } })
+          }).catch(err => console.error('Low stock notification failed', err));
+        }
       }
     });
 
