@@ -9,11 +9,26 @@ import {
   Camera
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { useEffect } from 'react';
 
 const AdminSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('admin_theme');
+    return saved ? saved === 'dark' : true;
+  });
   const [isTesting, setIsTesting] = useState(false);
+
+  // Apply theme class to document
+  useEffect(() => {
+    if (!isDarkMode) {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+    localStorage.setItem('admin_theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
   const [notifications, setNotifications] = useState(() => {
     const saved = localStorage.getItem('admin_notifications');
     return saved ? JSON.parse(saved) : {
@@ -37,6 +52,7 @@ const AdminSettings: React.FC = () => {
   const handleSave = () => {
     localStorage.setItem('admin_notifications', JSON.stringify(notifications));
     localStorage.setItem('admin_profile', JSON.stringify(profile));
+    localStorage.setItem('admin_theme', isDarkMode ? 'dark' : 'light');
     alert('Settings saved successfully!');
   };
 
@@ -47,14 +63,21 @@ const AdminSettings: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
-      const data = await response.json();
+      
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        data = await response.json();
+      }
+      
       if (response.ok) {
         alert('Test email sent! Please check your inbox.');
       } else {
-        alert('Failed to send test email: ' + (data.error || 'Unknown error'));
+        const errorMsg = data?.error || `Server Error (${response.status}). Please check Vercel Logs or your App Password.`;
+        alert('Failed: ' + errorMsg);
       }
-    } catch (error) {
-      alert('Error connecting to notification server. Please try again.');
+    } catch (error: any) {
+      alert('Network Error: Could not reach the server. Please check your connection or wait for the deployment to finish.');
     } finally {
       setIsTesting(false);
     }
@@ -240,13 +263,35 @@ const AdminSettings: React.FC = () => {
                    <div style={{ display: 'flex', gap: '24px' }}>
                       <div 
                         onClick={() => setIsDarkMode(true)}
-                        style={{ flex: 1, padding: '24px', borderRadius: '16px', border: '2px solid', borderColor: isDarkMode ? 'var(--admin-primary)' : 'transparent', background: 'rgba(255,255,255,0.05)', cursor: 'pointer', textAlign: 'center' }}>
+                        className={`theme-option ${isDarkMode ? 'selected' : ''}`}
+                        style={{ 
+                          flex: 1, 
+                          padding: '24px', 
+                          borderRadius: '16px', 
+                          border: '2px solid', 
+                          borderColor: isDarkMode ? 'var(--admin-primary)' : 'var(--admin-border)', 
+                          background: 'rgba(255,255,255,0.05)', 
+                          cursor: 'pointer', 
+                          textAlign: 'center',
+                          transition: 'all 0.2s ease'
+                        }}>
                          <Moon size={32} style={{ marginBottom: '12px', color: isDarkMode ? 'var(--admin-primary)' : 'inherit' }} />
                          <div style={{ fontWeight: 700 }}>Dark Theme</div>
                       </div>
                       <div 
                         onClick={() => setIsDarkMode(false)}
-                        style={{ flex: 1, padding: '24px', borderRadius: '16px', border: '2px solid', borderColor: !isDarkMode ? 'var(--admin-primary)' : 'transparent', background: 'rgba(255,255,255,0.05)', cursor: 'pointer', textAlign: 'center' }}>
+                        className={`theme-option ${!isDarkMode ? 'selected' : ''}`}
+                        style={{ 
+                          flex: 1, 
+                          padding: '24px', 
+                          borderRadius: '16px', 
+                          border: '2px solid', 
+                          borderColor: !isDarkMode ? 'var(--admin-primary)' : 'var(--admin-border)', 
+                          background: 'rgba(255,255,255,0.05)', 
+                          cursor: 'pointer', 
+                          textAlign: 'center',
+                          transition: 'all 0.2s ease'
+                        }}>
                          <Sun size={32} style={{ marginBottom: '12px', color: !isDarkMode ? 'var(--admin-primary)' : 'inherit' }} />
                          <div style={{ fontWeight: 700 }}>Light Theme</div>
                       </div>

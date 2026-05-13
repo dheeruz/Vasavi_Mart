@@ -195,13 +195,19 @@ const Checkout: React.FC = () => {
     const orderId = placeOrder(orderData);
     setPlacedOrderId(orderId);
 
-    // Send Admin Notification
-    const fullOrder = { ...orderData, id: orderId };
-    fetch('/api/notify/order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order: fullOrder })
-    }).catch(err => console.error('Order notification failed', err));
+    // Read notification settings
+    const savedNotify = localStorage.getItem('admin_notifications');
+    const notifyPrefs = savedNotify ? JSON.parse(savedNotify) : { orders: true, inventory: true };
+
+    // Send Admin Notification if enabled
+    if (notifyPrefs.orders) {
+      const fullOrder = { ...orderData, id: orderId };
+      fetch('/api/notify/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: fullOrder })
+      }).catch(err => console.error('Order notification failed', err));
+    }
 
     // Update Inventory/Stock & Check for Low Stock
     items.forEach(item => {
@@ -210,8 +216,8 @@ const Checkout: React.FC = () => {
         const newStock = Math.max(0, product.stock - item.quantity);
         updateProduct(product.id, { stock: newStock });
 
-        // Low Stock Alert (Stock < 5)
-        if (newStock < 5) {
+        // Low Stock Alert if enabled (Stock < 5)
+        if (newStock < 5 && notifyPrefs.inventory) {
           fetch('/api/notify/low-stock', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

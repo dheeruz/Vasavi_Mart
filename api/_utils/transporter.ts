@@ -3,12 +3,18 @@ import nodemailer from 'nodemailer';
 const user = process.env.MAIL_USER;
 const pass = process.env.MAIL_PASS;
 
+if (!user || !pass) {
+  console.warn('MAIL_USER or MAIL_PASS environment variables are missing!');
+}
+
 export const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // Use SSL
   auth: {
-    user: user,
-    pass: pass,
+    user: user || '',
+    pass: pass || '',
   },
 });
 
-export const adminEmail = user; // Admin is same as sender for simplicity
+export const adminEmail = user || 'admin@vasavimart.com';

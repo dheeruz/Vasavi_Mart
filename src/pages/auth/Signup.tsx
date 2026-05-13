@@ -36,12 +36,18 @@ const Signup: React.FC = () => {
     try {
       await signup(name, email, password);
       
-      // Trigger Notification
-      fetch('/api/notify/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email })
-      }).catch(err => console.error('Signup notification failed', err));
+      // Read notification settings
+      const savedNotify = localStorage.getItem('admin_notifications');
+      const notifyPrefs = savedNotify ? JSON.parse(savedNotify) : { customers: false };
+
+      // Trigger Notification if enabled
+      if (notifyPrefs.customers) {
+        fetch('/api/notify/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email })
+        }).catch(err => console.error('Signup notification failed', err));
+      }
       
       // Navigation handled inside context
     } catch (err: any) {

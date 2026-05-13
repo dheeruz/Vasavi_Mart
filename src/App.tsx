@@ -32,7 +32,19 @@ import AdminPayments from './pages/admin/AdminPayments';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminSettings from './pages/admin/AdminSettings';
 
+import { useEffect } from 'react';
+
 export default function App() {
+  // Global theme initialization
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('admin_theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+  }, []);
+
   return (
     <Router>
       <ScrollToTop />

@@ -15,6 +15,18 @@
   --status-cancelled: #ef4444;
 }
 
+.light-theme {
+  --admin-primary: #16a34a;
+  --admin-secondary: #f8fafc;
+  --admin-bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  --admin-card-bg: #ffffff;
+  --admin-text-primary: #1e293b;
+  --admin-text-secondary: #64748b;
+  --admin-border: rgba(0, 0, 0, 0.08);
+  --admin-glass: rgba(255, 255, 255, 0.8);
+  --admin-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
 .admin-layout {
   display: flex;
   min-height: 100vh;

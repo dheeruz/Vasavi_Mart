@@ -19,10 +19,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
 
   try {
+    if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
+      return res.status(500).json({ 
+        error: 'Environment variables MAIL_USER or MAIL_PASS are not set on Vercel.' 
+      });
+    }
+
     await transporter.sendMail(mailOptions);
     return res.status(200).json({ message: 'Test notification sent successfully' });
   } catch (error: any) {
     console.error('Email error:', error);
-    return res.status(500).json({ error: `Failed to send test email: ${error.message}` });
+    
+    let userMessage = error.message;
+    if (userMessage.includes('535')) {
+      userMessage = "Invalid Gmail Login. Please ensure 2-Step Verification is ON and you are using a 16-character App Password (NOT your normal password).";
+    }
+    
+    return res.status(500).json({ error: `Failed: ${userMessage}` });
   }
 }
