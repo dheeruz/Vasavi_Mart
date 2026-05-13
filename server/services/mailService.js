@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // Use SSL
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
@@ -23,6 +25,11 @@ transporter.verify((error, success) => {
  * Reusable email sending function with logging
  */
 const sendEmail = async (to, subject, html) => {
+  if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
+    console.error('[Email Service] Missing credentials in .env');
+    return { success: false, error: 'Missing credentials' };
+  }
+  
   try {
     const mailOptions = {
       from: `"Vasavi Mart" <${process.env.MAIL_USER}>`,
@@ -38,6 +45,22 @@ const sendEmail = async (to, subject, html) => {
     console.error(`[Email Service] Error sending email: ${error.message}`);
     return { success: false, error: error.message };
   }
+};
+
+/**
+ * Send Test Email for Configuration Check
+ */
+export const sendTestEmail = async (adminEmail) => {
+  const html = `
+    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px; max-width: 600px; background: #f0fdf4;">
+      <h2 style="color: #16a34a; border-bottom: 2px solid #16a34a; padding-bottom: 10px;">Local System Test Successful!</h2>
+      <p>This is a test notification from your <strong>Local</strong> Vasavi Mart development environment.</p>
+      <p>Your local email notification system is now properly configured and working.</p>
+      <p><strong>Environment:</strong> Localhost (Express)</p>
+      <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+    </div>
+  `;
+  return await sendEmail(adminEmail || process.env.MAIL_USER, "Local Test Notification - Vasavi Mart", html);
 };
 
 /**

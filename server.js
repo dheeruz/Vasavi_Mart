@@ -7,6 +7,8 @@ import nodemailer from 'nodemailer';
 import { registerNotification } from './server/controllers/authController.js';
 import { orderNotification } from './server/controllers/orderController.js';
 
+import { sendTestEmail } from './server/services/mailService.js';
+
 dotenv.config();
 
 const app = express();
@@ -30,6 +32,27 @@ const razorpay = new Razorpay({
 // Email Service Helper Routes
 app.post('/api/auth/register-notify', registerNotification);
 app.post('/api/order/place-notify', orderNotification);
+app.post('/api/notify/test', async (req, res) => {
+  try {
+    const result = await sendTestEmail();
+    if (result.success) {
+      res.status(200).json({ 
+        success: true, 
+        message: "Test notification route working and email sent!" 
+      });
+    } else {
+      res.status(500).json({ 
+        success: false, 
+        error: result.error 
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
 
 app.post('/api/payment/order', async (req, res) => {
   try {

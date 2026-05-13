@@ -58,8 +58,10 @@ const AdminSettings: React.FC = () => {
 
   const sendTestEmail = async () => {
     setIsTesting(true);
+    const BASE_URL = 'http://localhost:5000';
+    
     try {
-      const response = await fetch('/api/notify/test', {
+      const response = await fetch(`${BASE_URL}/api/notify/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -70,14 +72,14 @@ const AdminSettings: React.FC = () => {
         data = await response.json();
       }
       
-      if (response.ok) {
-        alert('Test email sent! Please check your inbox.');
+      if (response.ok && data?.success) {
+        alert('Success: ' + data.message);
       } else {
-        const errorMsg = data?.error || `Server Error (${response.status}). Please check Vercel Logs or your App Password.`;
+        const errorMsg = data?.error || `Backend Error (${response.status}). Please check your .env credentials.`;
         alert('Failed: ' + errorMsg);
       }
     } catch (error: any) {
-      alert('Network Error: Could not reach the server. Please check your connection or wait for the deployment to finish.');
+      alert('Network Error: Could not connect to the backend at http://localhost:5000. Please ensure the server is running.');
     } finally {
       setIsTesting(false);
     }
