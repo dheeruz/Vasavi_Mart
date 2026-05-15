@@ -199,15 +199,7 @@ const Checkout: React.FC = () => {
     const savedNotify = localStorage.getItem('admin_notifications');
     const notifyPrefs = savedNotify ? JSON.parse(savedNotify) : { orders: true, inventory: true };
 
-    // Send Admin Notification if enabled
-    if (notifyPrefs.orders) {
-      const fullOrder = { ...orderData, id: orderId };
-      fetch('/api/notify/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: fullOrder })
-      }).catch(err => console.error('Order notification failed', err));
-    }
+    // Redundant notification removed - handled by OrderContext.placeOrder()
 
     // Update Inventory/Stock & Check for Low Stock
     items.forEach(item => {
@@ -218,10 +210,14 @@ const Checkout: React.FC = () => {
 
         // Low Stock Alert if enabled (Stock < 5)
         if (newStock < 5 && notifyPrefs.inventory) {
-          fetch('/api/notify/low-stock', {
+          fetch('/api/notify/low-stock-alert', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ product: { ...product, stock: newStock } })
+            body: JSON.stringify({ 
+              productName: product.name,
+              stock: newStock,
+              productId: product.id
+            })
           }).catch(err => console.error('Low stock notification failed', err));
         }
       }
@@ -245,6 +241,10 @@ const Checkout: React.FC = () => {
               ? 'Thank you for your order. Please keep the cash ready for when our delivery partner arrives!' 
               : 'Thank you for shopping at Vasavi Mart. Your payment has been confirmed.'}
           </p>
+          <div className="bg-emerald-50 text-emerald-700 p-3 rounded-lg mb-6 flex items-center justify-center gap-2 font-medium">
+             <ShieldCheck size={18} />
+             A confirmation email has been sent to {user?.email || formData.email}
+          </div>
           <div className="order-details">
             <p><strong>Order Number:</strong> #{placedOrderId || 'ORD-SYNCING'}</p>
             <p><strong>Shipping to:</strong> {formData.firstName} {formData.lastName}, {formData.address}, {formData.city}</p>

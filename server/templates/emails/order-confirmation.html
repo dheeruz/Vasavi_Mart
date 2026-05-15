@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
+        .header { background-color: {{primaryColor}}; padding: 20px; text-align: center; color: white; }
+        .content { padding: 30px; background-color: #fff; }
+        .order-summary { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .order-summary th, .order-summary td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .total { font-weight: bold; font-size: 18px; color: {{primaryColor}}; }
+        .footer { background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #999; }
+        .address-box { background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmed!</h1>
+            <p>Order ID: #{{orderId}}</p>
+        </div>
+        <div class="content">
+            <p>Hi {{customerName}},</p>
+            <p>Thank you for shopping at {{companyName}}! Your order has been placed successfully and is being prepared for delivery.</p>
+            
+            <h3>Order Summary</h3>
+            <table class="order-summary">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th style="text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{itemsHtml}}
+                    <tr>
+                        <td><strong>Total Amount</strong></td>
+                        <td style="text-align: right;" class="total">₹{{totalAmount}}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="address-box">
+                <h4>Delivery Address</h4>
+                <p>{{shippingAddress}}</p>
+                <p>Estimated Delivery: <strong>{{estimatedDelivery}}</strong></p>
+            </div>
+
+            <p style="text-align: center;">
+                <a href="{{CLIENT_URL}}/account" style="color: {{primaryColor}}; font-weight: bold;">Track your order status</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{year}} {{companyName}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

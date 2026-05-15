@@ -82,6 +82,11 @@ const Login: React.FC = () => {
                 disabled={isLoading}
               />
             </div>
+            <div className="flex justify-end mt-2">
+              <Link to="/forgot-password" style={{ fontSize: '12px', color: 'var(--primary-color)', fontWeight: 500 }}>
+                Forgot Password?
+              </Link>
+            </div>
           </div>
 
           <button type="submit" className="auth-button flex items-center justify-center gap-2" disabled={isLoading}>

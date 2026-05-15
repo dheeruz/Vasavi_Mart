@@ -3,24 +3,51 @@ import cors from 'cors';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
-import { registerNotification } from './server/controllers/authController.js';
-import { orderNotification } from './server/controllers/orderController.js';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { validateEnv } from './server/middleware/validator.js';
+import { verifyEmailConnection } from './server/config/emailConfig.js';
+import logger from './server/utils/logger.js';
 
-import { sendTestEmail } from './server/services/mailService.js';
+// Route Imports
+import authRoutes from './server/routes/authRoutes.js';
+import orderRoutes from './server/routes/orderRoutes.js';
+import notificationRoutes from './server/routes/notificationRoutes.js';
 
 dotenv.config();
 
+// Validate Environment Variables
+validateEnv();
+
 const app = express();
-app.use(cors());
+
+// Security Middleware
+app.use(helmet());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
+
+// Global Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', limiter);
+
+// SMTP Verification on startup
+verifyEmailConnection();
 
 // Request logger middleware
 app.use((req, res, next) => {
-  console.log(`[API Request] ${req.method} ${req.url}`);
+  logger.info(`${req.method} ${req.url}`);
   next();
 });
 
+// Razorpay Initialization
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'dummy_key_id';
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'dummy_api_secret';
 
@@ -29,44 +56,22 @@ const razorpay = new Razorpay({
   key_secret: RAZORPAY_KEY_SECRET,
 });
 
-// Email Service Helper Routes
-app.post('/api/auth/register-notify', registerNotification);
-app.post('/api/order/place-notify', orderNotification);
-app.post('/api/notify/test', async (req, res) => {
-  try {
-    const result = await sendTestEmail();
-    if (result.success) {
-      res.status(200).json({ 
-        success: true, 
-        message: "Test notification route working and email sent!" 
-      });
-    } else {
-      res.status(500).json({ 
-        success: false, 
-        error: result.error 
-      });
-    }
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
-  }
-});
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/order', orderRoutes);
+app.use('/api/notify', notificationRoutes);
 
+// Payment Routes (Internal for now)
 app.post('/api/payment/order', async (req, res) => {
   try {
     const { amount, receipt } = req.body;
     if (!amount) return res.status(400).json({ error: 'Amount is required' });
 
     if (RAZORPAY_KEY_ID === 'dummy_key_id') {
-      return res.status(500).json({ error: 'Server configuration error: Razorpay keys are missing from Setup' });
+      return res.status(500).json({ error: 'Server configuration error: Razorpay keys are missing' });
     }
 
-    // Convert to Paise precisely
     const amountInPaise = Math.round(Number(amount) * 100);
-    console.log(`[Payment] Creating order for ₹${amount} (${amountInPaise} Paise)`);
-
     const options = {
       amount: amountInPaise, 
       currency: "INR",
@@ -74,8 +79,6 @@ app.post('/api/payment/order', async (req, res) => {
     };
 
     const order = await razorpay.orders.create(options);
-    if (!order) return res.status(500).json({ error: "Error creating Razorpay order" });
-
     res.status(200).json({
       orderId: order.id,
       amount: order.amount,
@@ -83,7 +86,7 @@ app.post('/api/payment/order', async (req, res) => {
       keyId: RAZORPAY_KEY_ID
     });
   } catch (error) {
-    console.error("Error creating order:", error);
+    logger.error("Error creating Razorpay order", error);
     res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
 });
@@ -104,12 +107,12 @@ app.post('/api/payment/verify', (req, res) => {
       res.status(400).json({ message: "Invalid signature sent!", verified: false });
     }
   } catch (error) {
-    console.error("Verification error:", error);
+    logger.error("Verification error", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`[Local Backend] Running on http://localhost:${PORT}`);
+  logger.info(`[Vasavi Mart Backend] Running on http://localhost:${PORT}`);
 });

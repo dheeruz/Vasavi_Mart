@@ -13,6 +13,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import Account from './pages/user/Account';
 // Footer Pages
 import About from './pages/footer/About';
@@ -45,6 +46,8 @@ export default function App() {
     }
   }, []);
 
+  const isAdminRoute = window.location.pathname.startsWith('/admin');
+
   return (
     <Router>
       <ScrollToTop />
@@ -53,12 +56,13 @@ export default function App() {
           <OrderProvider>
             <CartProvider>
               <div className="app-container">
-              <Navbar />
-              <main className="main-content">
+              {!isAdminRoute && <Navbar />}
+              <main className={isAdminRoute ? "admin-main-wrapper" : "main-content"}>
                 <Routes>
                   {/* Public Auth Routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
 
                   {/* Public Content Routes */}
                   <Route path="/about" element={<About />} />
@@ -91,7 +95,7 @@ export default function App() {
                   </Route>
                 </Routes>
               </main>
-              <Footer />
+              {!isAdminRoute && <Footer />}
             </div>
           </CartProvider>
         </OrderProvider>

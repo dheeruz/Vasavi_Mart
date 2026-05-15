@@ -10,8 +10,10 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminSettings: React.FC = () => {
+  const { user, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('admin_theme');
@@ -39,20 +41,24 @@ const AdminSettings: React.FC = () => {
     };
   });
 
-  const [profile, setProfile] = useState(() => {
-    const saved = localStorage.getItem('admin_profile');
-    return saved ? JSON.parse(saved) : {
-      name: 'Dheeraj Kumar',
-      email: 'admin@vasavimart.com',
-      role: 'Store Owner',
-      phone: '+91 9876543210'
-    };
+  const [profile, setProfile] = useState({
+    name: user?.name || 'Admin',
+    email: user?.email || 'admin@vasavimart.com',
+    role: user?.role === 'admin' ? 'Store Owner' : 'User',
+    phone: user?.mobile || '+91 9876543210'
   });
 
   const handleSave = () => {
     localStorage.setItem('admin_notifications', JSON.stringify(notifications));
-    localStorage.setItem('admin_profile', JSON.stringify(profile));
     localStorage.setItem('admin_theme', isDarkMode ? 'dark' : 'light');
+    
+    // Sync with AuthContext
+    updateProfile({
+      name: profile.name,
+      email: profile.email,
+      mobile: profile.phone
+    });
+    
     alert('Settings saved successfully!');
   };
 
@@ -63,7 +69,8 @@ const AdminSettings: React.FC = () => {
     try {
       const response = await fetch(`${BASE_URL}/api/notify/test`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: profile.email })
       });
       
       let data;

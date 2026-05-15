@@ -1,33 +1,50 @@
-import { sendOrderConfirmationEmail, sendAdminOrderNotification } from '../services/mailService.js';
+import mailService from '../services/mailService.js';
+import logger from '../utils/logger.js';
 
+/**
+ * Handle new order placement notification
+ */
 export const orderNotification = async (req, res) => {
   try {
-    const { orderDetails, adminEmail } = req.body;
+    const { orderDetails } = req.body;
     
-    if (!orderDetails || !orderDetails.customer) {
-      return res.status(400).json({ success: false, message: "Order data missing" });
+    if (!orderDetails || !orderDetails.id) {
+      return res.status(400).json({ success: false, message: "Order details are required" });
     }
 
-    const finalAdminEmail = (!adminEmail || adminEmail === 'admin@vasavimart.com') 
-      ? process.env.MAIL_USER 
-      : adminEmail;
+    logger.info(`Processing order notification for #${orderDetails.id}`);
 
-    console.log(`[Order Controller] Notifications: User: ${orderDetails.customer.email}, Admin: ${finalAdminEmail}`);
+    // 1. Send Confirmation to Customer
+    await mailService.sendOrderConfirmation(orderDetails.customer.email, orderDetails);
 
-    // Send Confirmation Email to User
-    const confirmationResult = await sendOrderConfirmationEmail(orderDetails);
-    
-    // Send Alert to Admin
-    const adminAlertResult = await sendAdminOrderNotification(orderDetails, finalAdminEmail);
+    // 2. Send Alert to Admin
+    await mailService.sendAdminNewOrderAlert(orderDetails);
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Order notifications processed',
-      userEmailSent: confirmationResult.success,
-      adminEmailSent: adminAlertResult.success
-    });
+    res.status(200).json({ success: true, message: "Order notifications queued" });
   } catch (error) {
-    console.error(`[Order Controller] Error: ${error.message}`);
+    logger.error('Order notification failed', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Handle order status update notification
+ */
+export const updateStatusNotification = async (req, res) => {
+  try {
+    const { email, orderId, customerName, status } = req.body;
+
+    if (!email || !orderId || !status) {
+      return res.status(400).json({ success: false, message: "Required fields missing" });
+    }
+
+    logger.info(`Processing status update notification for #${orderId} -> ${status}`);
+
+    await mailService.sendStatusUpdate(email, orderId, customerName, status);
+
+    res.status(200).json({ success: true, message: `Status update notification for ${status} queued` });
+  } catch (error) {
+    logger.error('Status update notification failed', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
