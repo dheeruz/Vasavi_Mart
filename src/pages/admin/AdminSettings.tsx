@@ -11,6 +11,7 @@ import {
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { API_ENDPOINTS } from '../../config/api';
 
 const AdminSettings: React.FC = () => {
   const { user, updateProfile } = useAuth();
@@ -64,10 +65,9 @@ const AdminSettings: React.FC = () => {
 
   const sendTestEmail = async () => {
     setIsTesting(true);
-    const BASE_URL = 'http://localhost:5000';
     
     try {
-      const response = await fetch(`${BASE_URL}/api/notify/test`, {
+      const response = await fetch(`${API_ENDPOINTS.NOTIFY}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: profile.email })
@@ -82,11 +82,11 @@ const AdminSettings: React.FC = () => {
       if (response.ok && data?.success) {
         alert('Success: ' + data.message);
       } else {
-        const errorMsg = data?.error || `Backend Error (${response.status}). Please check your .env credentials.`;
+        const errorMsg = data?.error || `Backend Error (${response.status}). Please check your server credentials.`;
         alert('Failed: ' + errorMsg);
       }
     } catch (error: any) {
-      alert('Network Error: Could not connect to the backend at http://localhost:5000. Please ensure the server is running.');
+      alert(`Network Error: Could not connect to the backend. Please ensure the server is running.`);
     } finally {
       setIsTesting(false);
     }

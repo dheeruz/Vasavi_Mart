@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useOrders } from '../context/OrderContext';
 import { useAuth, type AddressItem } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
+import { API_ENDPOINTS } from '../config/api';
 import './Checkout.css';
 
 const loadRazorpayScript = () => {
@@ -97,7 +98,7 @@ const Checkout: React.FC = () => {
 
     try {
       // 1. Create order on backend securely
-      const result = await fetch('/api/payment/order', {
+      const result = await fetch(`${API_ENDPOINTS.PAYMENT}/order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -128,7 +129,7 @@ const Checkout: React.FC = () => {
         handler: async function (response: any) {
           try {
             // 3. Verify Signature securely on backend
-            const verifyRes = await fetch('/api/payment/verify', {
+            const verifyRes = await fetch(`${API_ENDPOINTS.PAYMENT}/verify`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -210,7 +211,7 @@ const Checkout: React.FC = () => {
 
         // Low Stock Alert if enabled (Stock < 5)
         if (newStock < 5 && notifyPrefs.inventory) {
-          fetch('/api/notify/low-stock-alert', {
+          fetch(`${API_ENDPOINTS.NOTIFY}/low-stock-alert`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 

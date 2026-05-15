@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { mockProducts as initialProducts } from '../data/mockProducts';
 import type { Product } from '../types/product';
 export type { Product };
@@ -44,7 +45,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const adminProfile = savedProfile ? JSON.parse(savedProfile) : { email: 'admin@vasavimart.com' };
 
           if (notificationPrefs.inventory) {
-            fetch('/api/admin/notify-inventory', {
+            fetch(`${API_ENDPOINTS.NOTIFY}/low-stock-alert`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 

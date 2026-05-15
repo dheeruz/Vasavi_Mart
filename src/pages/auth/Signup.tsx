@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Store, UserCircle, Mail, Lock, UserPlus } from 'lucide-react';
+import { API_ENDPOINTS } from '../../config/api';
 import './Auth.css';
 
 const Signup: React.FC = () => {
@@ -42,7 +43,7 @@ const Signup: React.FC = () => {
 
       // Trigger Notification if enabled
       if (notifyPrefs.customers) {
-        fetch('/api/auth/register-notify', {
+        fetch(`${API_ENDPOINTS.AUTH}/register-notify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email })

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Store, Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
+import { API_ENDPOINTS } from '../../config/api';
 import './Auth.css';
 
 const ForgotPassword: React.FC = () => {
@@ -17,7 +18,7 @@ const ForgotPassword: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetch(`${API_ENDPOINTS.AUTH}/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

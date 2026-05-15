@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { CartItem } from './CartContext';
+import { API_ENDPOINTS } from '../config/api';
 
 export interface OrderCustomer {
   firstName: string;
@@ -108,7 +109,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const savedProfile = localStorage.getItem('admin_profile');
     const adminProfile = savedProfile ? JSON.parse(savedProfile) : { email: 'admin@vasavimart.com' };
 
-    fetch('/api/order/place-notify', {
+    fetch(`${API_ENDPOINTS.ORDER}/place-notify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
