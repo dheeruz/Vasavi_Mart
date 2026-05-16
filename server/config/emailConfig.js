@@ -8,18 +8,22 @@ dotenv.config();
  * Vasavi Mart - Centralized Email Configuration
  */
 
+import dns from 'dns';
+
+// Force Node.js DNS resolution to prefer IPv4 globally
+dns.setDefaultResultOrder("ipv4first");
+
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  host: "smtp.gmail.com",
   port: 465,
-  secure: true, // Use SSL
+  secure: true,
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-  family: 4, // Force IPv4
-  connectionTimeout: 30000, // 30s
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
 export const verifyEmailConnection = async () => {
