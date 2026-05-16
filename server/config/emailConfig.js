@@ -10,15 +10,16 @@ dotenv.config();
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // Use STARTTLS
+  port: 465,
+  secure: true, // Use SSL
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-  connectionTimeout: 20000, // 20s
-  greetingTimeout: 20000,
-  socketTimeout: 30000, // 30s
+  family: 4, // Force IPv4 to avoid ENETUNREACH on Render
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 20000,
 });
 
 export const verifyEmailConnection = async () => {
