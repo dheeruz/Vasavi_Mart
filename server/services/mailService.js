@@ -2,7 +2,7 @@ import { renderTemplate } from '../utils/templateLoader.js';
 import emailQueue from '../utils/emailQueue.js';
 import logger from '../utils/logger.js';
 import branding from '../config/branding.js';
-import transporter from '../config/emailConfig.js';
+import getTransporter from '../config/emailConfig.js';
 
 /**
  * Vasavi Mart - Transactional Email Service
@@ -19,6 +19,7 @@ const mailService = {
       
       if (bypassQueue) {
         const fromEmail = process.env.MAIL_USER || 'support@vasavimart.com';
+        const transporter = await getTransporter();
         
         try {
           logger.info('Verifying SMTP connection before sending...');
