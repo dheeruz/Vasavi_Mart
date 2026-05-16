@@ -1,5 +1,5 @@
 import logger from './logger.js';
-import transporter from '../config/emailConfig.js';
+import getTransporter from '../config/emailConfig.js';
 import branding from '../config/branding.js';
 
 /**
@@ -40,6 +40,7 @@ class EmailQueue {
         html: job.html,
       };
 
+      const transporter = await getTransporter();
       await transporter.sendMail(mailOptions);
       logger.info(`Email sent successfully from queue: ${job.subject} to ${job.to}`);
     } catch (error) {
