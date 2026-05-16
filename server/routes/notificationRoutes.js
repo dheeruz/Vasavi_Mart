@@ -97,4 +97,14 @@ router.post('/low-stock-alert', async (req, res) => {
   }
 });
 
+// GET /api/notify/status
+router.get('/status', async (req, res) => {
+  const isConfigured = !!(process.env.MAIL_USER && process.env.MAIL_PASS);
+  res.status(200).json({
+    success: true,
+    smtp: isConfigured,
+    message: isConfigured ? "Email system configured" : "Email system missing credentials"
+  });
+});
+
 export default router;

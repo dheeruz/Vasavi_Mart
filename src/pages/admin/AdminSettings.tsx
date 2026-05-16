@@ -50,6 +50,21 @@ const AdminSettings: React.FC = () => {
     phone: user?.mobile || '+91 9876543210'
   });
 
+  const [smtpConfigured, setSmtpConfigured] = useState(true); // Default to true to avoid flash
+
+  useEffect(() => {
+    const checkSmtp = async () => {
+      try {
+        const res = await fetch(`${API_ENDPOINTS.NOTIFY}/status`);
+        const data = await res.json();
+        setSmtpConfigured(!!data.smtp);
+      } catch (e) {
+        console.error('Failed to check SMTP status', e);
+      }
+    };
+    checkSmtp();
+  }, []);
+
   const handleSave = () => {
     localStorage.setItem('admin_notifications', JSON.stringify(notifications));
     localStorage.setItem('admin_theme', isDarkMode ? 'dark' : 'light');
@@ -198,17 +213,19 @@ const AdminSettings: React.FC = () => {
                 <div className="animate-fade-in">
                    <h3 style={{ marginBottom: '24px' }}>Notification Preferences</h3>
                    
-                   <div style={{ padding: '16px', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.1)', marginBottom: '24px' }}>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                         <Bell size={20} style={{ color: '#f59e0b', marginTop: '2px' }} />
-                         <div>
-                            <div style={{ fontWeight: 600, color: '#f59e0b', marginBottom: '4px' }}>Configuration Required</div>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-secondary)', margin: 0, lineHeight: 1.5 }}>
-                               To receive real emails, ensure you have set <code>MAIL_USER</code> and <code>MAIL_PASS</code> in your <code>.env</code> file.
-                            </p>
-                         </div>
-                      </div>
-                   </div>
+                   {!smtpConfigured && (
+                    <div style={{ padding: '16px', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.1)', marginBottom: '24px' }}>
+                       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                          <Bell size={20} style={{ color: '#f59e0b', marginTop: '2px' }} />
+                          <div>
+                             <div style={{ fontWeight: 600, color: '#f59e0b', marginBottom: '4px' }}>Configuration Required</div>
+                             <p style={{ fontSize: '0.875rem', color: 'var(--admin-text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                                To receive real emails, ensure you have set <code>MAIL_USER</code> and <code>MAIL_PASS</code> in your <code>.env</code> file.
+                             </p>
+                          </div>
+                       </div>
+                    </div>
+                   )}
 
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
