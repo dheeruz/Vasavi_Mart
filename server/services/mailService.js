@@ -19,22 +19,37 @@ const mailService = {
       
       if (bypassQueue) {
         const fromEmail = process.env.MAIL_USER || 'support@vasavimart.com';
-        await transporter.sendMail({
-          from: `"${branding.companyName}" <${fromEmail}>`,
-          to,
-          subject,
-          text,
-          html
-        });
-        logger.info(`Direct email sent successfully: ${subject} to ${to}`);
+        
+        try {
+          logger.info('Verifying SMTP connection before sending...');
+          await transporter.verify();
+          logger.info('SMTP ready');
+        } catch (verifyError) {
+          logger.error('SMTP verification failed:', verifyError.stack || verifyError);
+          throw new Error('SMTP connection or authentication failed: ' + verifyError.message);
+        }
+
+        try {
+          await transporter.sendMail({
+            from: `"${branding.companyName}" <${fromEmail}>`,
+            to,
+            subject,
+            text,
+            html
+          });
+          logger.info(`Direct email sent successfully: ${subject} to ${to}`);
+        } catch (sendError) {
+          logger.error('sendMail failed:', sendError.stack || sendError);
+          throw new Error('Failed to send email: ' + sendError.message);
+        }
       } else {
         await emailQueue.add(to, subject, html, text);
       }
       
       return { success: true };
     } catch (error) {
-      logger.error(`Mail service error for ${templateName}:`, error);
-      return { success: false, error: error.message };
+      logger.error(`Mail service error for ${templateName}:`, error.stack || error);
+      return { success: false, error: error.message, stack: error.stack };
     }
   },
 
