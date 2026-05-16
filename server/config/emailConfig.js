@@ -16,10 +16,10 @@ const transporter = nodemailer.createTransport({
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-  family: 4, // Force IPv4 to avoid ENETUNREACH on Render
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 20000,
+  family: 4, // Force IPv4
+  connectionTimeout: 30000, // 30s
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 });
 
 export const verifyEmailConnection = async () => {
