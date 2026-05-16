@@ -12,10 +12,26 @@ const mailService = {
   /**
    * General purpose sender with template rendering
    */
-  send: async (to, subject, templateName, data = {}, text = '') => {
+  send: async (to, subject, templateName, data = {}, text = '', bypassQueue = false) => {
     try {
       const html = await renderTemplate(templateName, data);
-      await emailQueue.add(to, subject, html, text);
+      
+      if (bypassQueue) {
+        const { default: transporter } = await import('../config/emailConfig.js');
+        const branding = (await import('../config/branding.js')).default;
+        
+        await transporter.sendMail({
+          from: `"${branding.companyName}" <${process.env.MAIL_USER}>`,
+          to,
+          subject,
+          text,
+          html
+        });
+        logger.info(`Direct email sent successfully: ${subject} to ${to}`);
+      } else {
+        await emailQueue.add(to, subject, html, text);
+      }
+      
       return { success: true };
     } catch (error) {
       logger.error(`Mail service error for ${templateName}`, error);
@@ -26,19 +42,21 @@ const mailService = {
   /**
    * Welcome Email for New Users
    */
-  sendWelcome: async (email, name) => {
+  sendWelcome: async (email, name, bypassQueue = false) => {
     return await mailService.send(
       email,
       `Welcome to ${branding.companyName}!`,
       'welcome',
-      { name, CLIENT_URL: process.env.CLIENT_URL }
+      { name, CLIENT_URL: process.env.CLIENT_URL },
+      '',
+      bypassQueue
     );
   },
 
   /**
    * Order Confirmation for Customers
    */
-  sendOrderConfirmation: async (email, order) => {
+  sendOrderConfirmation: async (email, order, bypassQueue = false) => {
     const itemsHtml = order.items.map(item => `
       <tr>
         <td>
@@ -75,14 +93,15 @@ const mailService = {
         itemsHtml,
         CLIENT_URL: process.env.CLIENT_URL 
       },
-      plainText
+      plainText,
+      bypassQueue
     );
   },
 
   /**
    * Admin Alert for New Orders
    */
-  sendAdminNewOrderAlert: async (order) => {
+  sendAdminNewOrderAlert: async (order, bypassQueue = false) => {
     const itemsHtml = order.items.map(item => `
       <tr>
         <td>${item.name} (x${item.quantity})</td>
@@ -104,14 +123,16 @@ const mailService = {
         paymentMethod: order.paymentMethod,
         itemsHtml,
         CLIENT_URL: process.env.CLIENT_URL
-      }
+      },
+      '',
+      bypassQueue
     );
   },
 
   /**
    * Order Status Update (Processing/Shipped/Delivered)
    */
-  sendStatusUpdate: async (email, orderId, customerName, status) => {
+  sendStatusUpdate: async (email, orderId, customerName, status, bypassQueue = false) => {
     let statusMessage = '';
     switch(status.toLowerCase()) {
       case 'shipped':
@@ -134,27 +155,31 @@ const mailService = {
         status, 
         statusMessage,
         CLIENT_URL: process.env.CLIENT_URL 
-      }
+      },
+      '',
+      bypassQueue
     );
   },
 
   /**
    * Password Reset Email
    */
-  sendPasswordReset: async (email, name, resetToken) => {
+  sendPasswordReset: async (email, name, resetToken, bypassQueue = false) => {
     const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
     return await mailService.send(
       email,
       'Password Reset Request',
       'password-reset',
-      { name, resetLink }
+      { name, resetLink },
+      '',
+      bypassQueue
     );
   },
 
   /**
    * Admin Alert (New Order / Low Stock)
    */
-  sendAdminAlert: async (type, message, details, color = '#F8961E') => {
+  sendAdminAlert: async (type, message, details, color = '#F8961E', bypassQueue = false) => {
     return await mailService.send(
       process.env.MAIL_USER, // Admin email
       `[ADMIN ALERT] ${type}`,
@@ -166,7 +191,9 @@ const mailService = {
         alertColor: color,
         timestamp: new Date().toLocaleString(),
         CLIENT_URL: process.env.CLIENT_URL 
-      }
+      },
+      '',
+      bypassQueue
     );
   }
 };

@@ -12,6 +12,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
+import Toast from '../../components/ui/Toast';
 
 const AdminSettings: React.FC = () => {
   const { user, updateProfile } = useAuth();
@@ -63,15 +64,25 @@ const AdminSettings: React.FC = () => {
     alert('Settings saved successfully!');
   };
 
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+
   const sendTestEmail = async () => {
     setIsTesting(true);
+    setToast(null);
     
+    // Timeout controller
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
     try {
       const response = await fetch(`${API_ENDPOINTS.NOTIFY}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: profile.email })
+        body: JSON.stringify({ email: profile.email }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       let data;
       const contentType = response.headers.get("content-type");
@@ -80,13 +91,17 @@ const AdminSettings: React.FC = () => {
       }
       
       if (response.ok && data?.success) {
-        alert('Success: ' + data.message);
+        setToast({ message: data.message || 'SMTP test email sent successfully!', type: 'success' });
       } else {
-        const errorMsg = data?.error || `Backend Error (${response.status}). Please check your server credentials.`;
-        alert('Failed: ' + errorMsg);
+        const errorMsg = data?.error || data?.message || `Backend Error (${response.status}). Please check your server credentials.`;
+        setToast({ message: errorMsg, type: 'error' });
       }
     } catch (error: any) {
-      alert(`Network Error: Could not connect to the backend. Please ensure the server is running.`);
+      if (error.name === 'AbortError') {
+        setToast({ message: 'Request timed out. The SMTP server is taking too long to respond.', type: 'error' });
+      } else {
+        setToast({ message: `Network Error: Could not connect to the backend. Please ensure the server is running.`, type: 'error' });
+      }
     } finally {
       setIsTesting(false);
     }
@@ -316,6 +331,13 @@ const AdminSettings: React.FC = () => {
            </div>
         </div>
       </div>
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </AdminLayout>
   );
 };

@@ -12,12 +12,23 @@ const router = express.Router();
 router.post('/test', async (req, res) => {
   try {
     const { email } = req.body;
-    await mailService.sendAdminAlert('System Test', 'Manually triggered system SMTP test.', `Target: ${email || 'Admin'}`);
+    // Bypass queue for direct verification of SMTP
+    const result = await mailService.sendAdminAlert(
+      'System Test', 
+      'Manually triggered system SMTP test.', 
+      `Target: ${email || 'Admin'}`,
+      '#2F8F4C', // Green for success test
+      true // bypassQueue
+    );
     
-    res.status(200).json({ 
-      success: true, 
-      message: "Test alert added to queue" 
-    });
+    if (result.success) {
+      res.status(200).json({ 
+        success: true, 
+        message: "SMTP test email sent successfully!" 
+      });
+    } else {
+      throw new Error(result.error || 'Failed to send direct email');
+    }
   } catch (error) {
     logger.error('Manual test route error', error);
     res.status(500).json({ success: false, message: error.message });
