@@ -27,10 +27,11 @@ router.post('/test', async (req, res) => {
         message: "SMTP test email sent successfully!" 
       });
     } else {
+      logger.error('SMTP direct send failed:', result.error);
       throw new Error(result.error || 'Failed to send direct email');
     }
   } catch (error) {
-    logger.error('Manual test route error', error);
+    logger.error('Manual test route error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

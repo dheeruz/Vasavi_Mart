@@ -9,14 +9,16 @@ dotenv.config();
  */
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // Use STARTTLS
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-  connectionTimeout: 10000, // 10s
-  greetingTimeout: 10000,
-  socketTimeout: 20000, // 20s
+  connectionTimeout: 20000, // 20s
+  greetingTimeout: 20000,
+  socketTimeout: 30000, // 30s
 });
 
 export const verifyEmailConnection = async () => {

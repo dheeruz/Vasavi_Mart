@@ -2,6 +2,7 @@ import { renderTemplate } from '../utils/templateLoader.js';
 import emailQueue from '../utils/emailQueue.js';
 import logger from '../utils/logger.js';
 import branding from '../config/branding.js';
+import transporter from '../config/emailConfig.js';
 
 /**
  * Vasavi Mart - Transactional Email Service
@@ -17,11 +18,9 @@ const mailService = {
       const html = await renderTemplate(templateName, data);
       
       if (bypassQueue) {
-        const { default: transporter } = await import('../config/emailConfig.js');
-        const branding = (await import('../config/branding.js')).default;
-        
+        const fromEmail = process.env.MAIL_USER || 'support@vasavimart.com';
         await transporter.sendMail({
-          from: `"${branding.companyName}" <${process.env.MAIL_USER}>`,
+          from: `"${branding.companyName}" <${fromEmail}>`,
           to,
           subject,
           text,
@@ -34,7 +33,7 @@ const mailService = {
       
       return { success: true };
     } catch (error) {
-      logger.error(`Mail service error for ${templateName}`, error);
+      logger.error(`Mail service error for ${templateName}:`, error);
       return { success: false, error: error.message };
     }
   },
