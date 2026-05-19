@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "node server.js",
     "server": "node server.js",
     "dev:full": "concurrently \"vite\" \"node server.js\"",
     "vercel:dev": "vercel dev",
