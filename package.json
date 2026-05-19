@@ -9,7 +9,7 @@
     "server": "node server.js",
     "dev:full": "concurrently \"vite\" \"node server.js\"",
     "vercel:dev": "vercel dev",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/build.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
