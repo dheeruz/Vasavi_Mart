@@ -28,8 +28,8 @@ const createTransporter = async () => {
     
     transporter = nodemailer.createTransport({
       host: ipv4Address,
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false, // Must be false for port 587 (STARTTLS)
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
@@ -46,8 +46,8 @@ const createTransporter = async () => {
     // Fallback to standard initialization if DNS fails
     transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
