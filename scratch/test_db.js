@@ -5,25 +5,17 @@ import path from 'path';
 dotenv.config({ path: path.resolve('./.env') });
 
 async function run() {
-  const orderId = 'ORD-557162';
+  const email = 'admin@vasavimart.com';
   
-  console.log('Querying order_history directly...');
-  const { data: history, error: historyErr } = await supabase
-    .from('order_history')
+  console.log(`Checking if user ${email} exists in database...`);
+  const { data: user, error: userErr } = await supabase
+    .from('users')
     .select('*')
-    .eq('order_id', orderId);
+    .eq('email', email)
+    .maybeSingle();
     
-  console.log('History data:', history);
-  console.log('History error:', historyErr);
-
-  console.log('Querying orders with relation join...');
-  const { data: joinData, error: joinErr } = await supabase
-    .from('orders')
-    .select('*, order_history(*)')
-    .eq('id', orderId);
-
-  console.log('Join data:', joinData);
-  console.log('Join error:', joinErr);
+  console.log('User data:', user);
+  console.log('User error:', userErr);
 }
 
 run();

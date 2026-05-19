@@ -60,19 +60,59 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      logger.warn('Login request missing email or password');
+      return res.status(400).json({ error: "Email and password required" });
+    }
     
-    // Check Hardcoded Admin
-    if (email === 'admin@vasavimart.com' && password === 'admin123') {
-       const token = jwt.sign({ id: 'admin_1', role: 'admin' }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
-       return res.status(200).json({ token, user: { id: 'admin_1', name: 'Store Owner', email, role: 'admin' } });
+    // Auto-seed admin user in database if logging in as admin and they do not exist
+    if (email === 'admin@vasavimart.com') {
+      logger.info('Admin login request received. Checking database for admin user...');
+      const { data: adminExists, error: checkError } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+      
+      if (checkError) {
+        logger.error('Database error checking admin existence:', checkError);
+      }
+      
+      if (!adminExists) {
+        logger.info('Admin user not found in database. Auto-creating default admin user...');
+        const salt = await bcrypt.genSalt(10);
+        const adminHash = await bcrypt.hash('admin123', salt);
+        const { error: seedError } = await supabase.from('users').insert([{
+          email: 'admin@vasavimart.com',
+          password_hash: adminHash,
+          first_name: 'Store',
+          last_name: 'Owner',
+          role: 'admin'
+        }]);
+        
+        if (seedError) {
+          logger.error('Failed to auto-seed admin user:', seedError);
+        } else {
+          logger.info('Default admin user auto-created successfully!');
+        }
+      }
     }
 
+    logger.info(`Attempting login for email: ${email}...`);
     const { data, error } = await supabase.from('users').select('*').eq('email', email).maybeSingle();
-    if (error || !data) return res.status(400).json({ error: "Invalid email or password" });
+    if (error) {
+      logger.error(`Database error fetching user ${email} during login:`, error);
+      return res.status(500).json({ error: "Internal database error" });
+    }
+    
+    if (!data) {
+      logger.warn(`Login failed: No user found with email ${email}`);
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
 
     const validPass = await bcrypt.compare(password, data.password_hash);
-    if (!validPass) return res.status(400).json({ error: "Invalid email or password" });
+    if (!validPass) {
+      logger.warn(`Login failed: Incorrect password for email ${email}`);
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
 
+    logger.info(`Login successful for user ${email} (Role: ${data.role})`);
     const token = jwt.sign({ id: data.id, role: data.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
     const user = { id: data.id, name: `${data.first_name} ${data.last_name || ''}`.trim(), email: data.email, role: data.role, phone: data.phone };
     
