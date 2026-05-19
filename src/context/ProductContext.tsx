@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config/api';
-import { mockProducts as initialProducts } from '../data/mockProducts';
 import type { Product } from '../types/product';
 export type { Product };
 
@@ -14,55 +13,60 @@ interface ProductContextType {
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('vasavi_products');
-    return saved ? JSON.parse(saved) : initialProducts;
-  });
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    localStorage.setItem('vasavi_products', JSON.stringify(products));
-  }, [products]);
+    fetch(API_ENDPOINTS.PRODUCTS)
+      .then(res => res.json())
+      .then(data => setProducts(data))
+      .catch(err => console.error('Failed to fetch products', err));
+  }, []);
 
-  const addProduct = (productData: Omit<Product, 'id'>) => {
-    const newProduct: Product = {
-      ...productData,
-      id: `p${Date.now()}`
-    };
-    setProducts(prev => [newProduct, ...prev]);
+  const addProduct = async (productData: Omit<Product, 'id'>) => {
+    try {
+      const res = await fetch(API_ENDPOINTS.PRODUCTS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData)
+      });
+      const newProduct = await res.json();
+      setProducts(prev => [newProduct, ...prev]);
+    } catch (err) {
+      console.error('Failed to add product', err);
+    }
   };
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    setProducts(prev => {
-      const updatedProducts = prev.map(p => p.id === id ? { ...p, ...updates } : p);
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    try {
+      const res = await fetch(`${API_ENDPOINTS.PRODUCTS}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      const updated = await res.json();
+      setProducts(prev => prev.map(p => p.id === id ? updated : p));
       
-      // Check for Low Stock Trigger
-      if (updates.stock !== undefined) {
-        const product = updatedProducts.find(p => p.id === id);
-        if (product && typeof product.stock === 'number' && product.stock <= 10) {
-          const savedNotifications = localStorage.getItem('admin_notifications');
-          const notificationPrefs = savedNotifications ? JSON.parse(savedNotifications) : { inventory: true };
-          const savedProfile = localStorage.getItem('admin_profile');
-          const adminProfile = savedProfile ? JSON.parse(savedProfile) : { email: 'admin@vasavimart.com' };
-
-          if (notificationPrefs.inventory) {
-            fetch(`${API_ENDPOINTS.NOTIFY}/low-stock-alert`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                productData: product, 
-                adminEmail: adminProfile.email 
-              })
-            }).catch(err => console.error('Inventory alert failed', err));
-          }
-        }
+      // Keep low stock alert trigger
+      if (updates.stock !== undefined && updated.stock <= 10) {
+        const adminProfile = JSON.parse(localStorage.getItem('admin_profile') || '{"email": "admin@vasavimart.com"}');
+        fetch(`${API_ENDPOINTS.NOTIFY}/low-stock-alert`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productData: updated, adminEmail: adminProfile.email })
+        }).catch(err => console.error('Inventory alert failed', err));
       }
-      
-      return updatedProducts;
-    });
+    } catch (err) {
+      console.error('Failed to update product', err);
+    }
   };
 
-  const deleteProduct = (id: string) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
+  const deleteProduct = async (id: string) => {
+    try {
+      await fetch(`${API_ENDPOINTS.PRODUCTS}/${id}`, { method: 'DELETE' });
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error('Failed to delete product', err);
+    }
   };
 
   return (

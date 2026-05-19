@@ -9,6 +9,7 @@ import Shop from './pages/Shop';
 import Checkout from './pages/Checkout';
 import { OrderProvider } from './context/OrderContext';
 import { ProductProvider } from './context/ProductContext';
+import { WishlistProvider } from './context/WishlistContext';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './pages/auth/Login';
@@ -55,48 +56,50 @@ export default function App() {
         <ProductProvider>
           <OrderProvider>
             <CartProvider>
-              <div className="app-container">
-              {!isAdminRoute && <Navbar />}
-              <main className={isAdminRoute ? "admin-main-wrapper" : "main-content"}>
-                <Routes>
-                  {/* Public Auth Routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
+              <WishlistProvider>
+                <div className="app-container">
+                {!isAdminRoute && <Navbar />}
+                <main className={isAdminRoute ? "admin-main-wrapper" : "main-content"}>
+                  <Routes>
+                    {/* Public Auth Routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                  {/* Public Content Routes */}
-                  <Route path="/about" element={<About />} />
-                  <Route path="/careers" element={<Careers />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/help" element={<HelpCenter />} />
-                  <Route path="/terms" element={<Terms />} />
-                  <Route path="/privacy" element={<Privacy />} />
-                  <Route path="/refund" element={<Refund />} />
+                    {/* Public Content Routes */}
+                    <Route path="/about" element={<About />} />
+                    <Route path="/careers" element={<Careers />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/help" element={<HelpCenter />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/refund" element={<Refund />} />
 
-                  {/* Protected User Routes */}
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/shop" element={<Shop />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/account" element={<Account />} />
-                  </Route>
+                    {/* Protected User Routes */}
+                    <Route element={<ProtectedRoute />}>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/shop" element={<Shop />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/account" element={<Account />} />
+                    </Route>
 
-                  {/* Protected Admin Routes */}
-                  <Route element={<ProtectedRoute adminOnly={true} />}>
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                    <Route path="/admin/orders" element={<AdminOrders />} />
-                    <Route path="/admin/products" element={<AdminProducts />} />
-                    <Route path="/admin/customers" element={<AdminCustomers />} />
-                    <Route path="/admin/payments" element={<AdminPayments />} />
-                    <Route path="/admin/analytics" element={<AdminAnalytics />} />
-                    <Route path="/admin/settings" element={<AdminSettings />} />
-                  </Route>
-                </Routes>
-              </main>
-              {!isAdminRoute && <Footer />}
-            </div>
+                    {/* Protected Admin Routes */}
+                    <Route element={<ProtectedRoute adminOnly={true} />}>
+                      <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                      <Route path="/admin/orders" element={<AdminOrders />} />
+                      <Route path="/admin/products" element={<AdminProducts />} />
+                      <Route path="/admin/customers" element={<AdminCustomers />} />
+                      <Route path="/admin/payments" element={<AdminPayments />} />
+                      <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                      <Route path="/admin/settings" element={<AdminSettings />} />
+                    </Route>
+                  </Routes>
+                </main>
+                {!isAdminRoute && <Footer />}
+              </div>
+            </WishlistProvider>
           </CartProvider>
         </OrderProvider>
       </ProductProvider>

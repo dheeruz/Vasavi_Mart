@@ -13,6 +13,10 @@ import logger from './server/utils/logger.js';
 import authRoutes from './server/routes/authRoutes.js';
 import orderRoutes from './server/routes/orderRoutes.js';
 import notificationRoutes from './server/routes/notificationRoutes.js';
+import productRoutes from './server/routes/productRoutes.js';
+import adminRoutes from './server/routes/adminRoutes.js';
+import cartRoutes from './server/routes/cartRoutes.js';
+import wishlistRoutes from './server/routes/wishlistRoutes.js';
 
 dotenv.config();
 
@@ -53,7 +57,7 @@ app.use(express.json());
 // Global Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
+  max: 10000, // Limit each IP to 10000 requests per window
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -80,7 +84,12 @@ const razorpay = new Razorpay({
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/order', orderRoutes);
+app.use('/api/orders', orderRoutes); // alias
 app.use('/api/notify', notificationRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 // Payment Routes (Internal for now)
 app.post('/api/payment/order', async (req, res) => {

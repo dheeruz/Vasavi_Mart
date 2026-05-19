@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
@@ -15,13 +15,6 @@ import './Admin.css';
 const AdminDashboard: React.FC = () => {
   const { orders } = useOrders();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const isAdmin = localStorage.getItem('isAdmin');
-    if (isAdmin !== 'true') {
-      navigate('/admin');
-    }
-  }, [navigate]);
 
   // Stats Calculations
   const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
@@ -71,7 +64,7 @@ const AdminDashboard: React.FC = () => {
           />
         </div>
 
-        <DashboardCharts />
+        <DashboardCharts orders={orders} />
 
         <div className="table-container animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <div className="table-header">

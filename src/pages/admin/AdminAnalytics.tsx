@@ -8,8 +8,40 @@ import {
 import AdminLayout from '../../components/admin/AdminLayout';
 import DashboardCharts from '../../components/admin/DashboardCharts';
 import StatsCard from '../../components/admin/StatsCard';
+import { useOrders } from '../../context/OrderContext';
 
 const AdminAnalytics: React.FC = () => {
+  const { orders } = useOrders();
+  
+  // Avg Order Value
+  const totalRevenue = orders.reduce((acc, o) => acc + o.total, 0);
+  const avgOrderValue = orders.length > 0 ? (totalRevenue / orders.length) : 0;
+  
+  // Repeat Customers
+  const customerCounts: Record<string, number> = {};
+  orders.forEach(o => {
+    customerCounts[o.customer.email] = (customerCounts[o.customer.email] || 0) + 1;
+  });
+  const totalUniqueCustomers = Object.keys(customerCounts).length;
+  const repeatCustomerCount = Object.values(customerCounts).filter(count => count > 1).length;
+  const repeatCustomerRate = totalUniqueCustomers > 0 ? (repeatCustomerCount / totalUniqueCustomers) * 100 : 0;
+
+  // Conversion rate (dummy logic based on unique customers vs simulated traffic)
+  const visitors = totalUniqueCustomers * 3 + 120;
+  const conversionRate = visitors > 0 ? (orders.length / visitors) * 100 : 0;
+
+  // Sales Distribution
+  let fruits = 0, staples = 0, dairy = 0;
+  orders.forEach(o => o.items.forEach(item => {
+     if (item.category === 'Fruits & Veggies') fruits += item.quantity;
+     else if (item.category === 'Staples & Grains') staples += item.quantity;
+     else dairy += item.quantity;
+  }));
+  const totalItems = fruits + staples + dairy || 1;
+  const fruitsPercent = Math.round((fruits / totalItems) * 100);
+  const staplesPercent = Math.round((staples / totalItems) * 100);
+  const dairyPercent = 100 - fruitsPercent - staplesPercent;
+
   return (
     <AdminLayout>
       <div className="analytics-page">
@@ -26,7 +58,7 @@ const AdminAnalytics: React.FC = () => {
         <div className="stats-grid">
            <StatsCard 
               title="Conversion Rate" 
-              value="3.45%" 
+              value={`${conversionRate.toFixed(2)}%`} 
               icon={<TrendingUp size={24} />} 
               iconBg="#10b981"
               trend="+0.25%"
@@ -34,7 +66,7 @@ const AdminAnalytics: React.FC = () => {
             />
             <StatsCard 
               title="Repeat Customers" 
-              value="22.1%" 
+              value={`${repeatCustomerRate.toFixed(1)}%`} 
               icon={<Users size={24} />} 
               iconBg="#3b82f6"
               trend="+1.2%"
@@ -42,7 +74,7 @@ const AdminAnalytics: React.FC = () => {
             />
             <StatsCard 
               title="Avg. Order Value" 
-              value="₹1,240" 
+              value={`₹${avgOrderValue.toLocaleString(undefined, {maximumFractionDigits: 0})}`} 
               icon={<ShoppingBag size={24} />} 
               iconBg="#f59e0b"
               trend="-40.50"
@@ -50,7 +82,7 @@ const AdminAnalytics: React.FC = () => {
             />
         </div>
 
-        <DashboardCharts />
+        <DashboardCharts orders={orders} />
 
         <div className="charts-grid" style={{ marginTop: '24px' }}>
            <div className="chart-card glass">
@@ -78,28 +110,28 @@ const AdminAnalytics: React.FC = () => {
                  <div className="progress-stat">
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
                        <span>Fruits & Veggies</span>
-                       <span>45%</span>
+                       <span>{fruitsPercent}%</span>
                     </div>
                     <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
-                       <div style={{ width: '45%', height: '100%', background: 'var(--admin-primary)', borderRadius: '4px' }}></div>
+                       <div style={{ width: `${fruitsPercent}%`, height: '100%', background: 'var(--admin-primary)', borderRadius: '4px' }}></div>
                     </div>
                  </div>
                  <div className="progress-stat">
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
                        <span>Staples & Grains</span>
-                       <span>30%</span>
+                       <span>{staplesPercent}%</span>
                     </div>
                     <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
-                       <div style={{ width: '30%', height: '100%', background: '#3b82f6', borderRadius: '4px' }}></div>
+                       <div style={{ width: `${staplesPercent}%`, height: '100%', background: '#3b82f6', borderRadius: '4px' }}></div>
                     </div>
                  </div>
                  <div className="progress-stat">
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
-                       <span>Dairy & Eggs</span>
-                       <span>15%</span>
+                       <span>Dairy & Eggs (and others)</span>
+                       <span>{dairyPercent}%</span>
                     </div>
                     <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
-                       <div style={{ width: '15%', height: '100%', background: '#f59e0b', borderRadius: '4px' }}></div>
+                       <div style={{ width: `${dairyPercent}%`, height: '100%', background: '#f59e0b', borderRadius: '4px' }}></div>
                     </div>
                  </div>
               </div>

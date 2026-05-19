@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   UserPlus, 
@@ -14,6 +14,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { useOrders } from '../../context/OrderContext';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface Customer {
   id: string;
@@ -26,15 +28,8 @@ interface Customer {
   status: 'Active' | 'Blocked';
 }
 
-const mockCustomers: Customer[] = [
-  { id: 'c1', name: 'Dheeraj Kumar', email: 'dheeraj@example.com', phone: '+91 9876543210', location: 'Nellore, Andhra Pradesh', orders: 12, totalSpent: 4500, status: 'Active' },
-  { id: 'c2', name: 'Anita Sharma', email: 'anita@example.com', phone: '+91 9876543211', location: 'Hyderabad, Telangana', orders: 5, totalSpent: 2100, status: 'Active' },
-  { id: 'c3', name: 'Rahul Verma', email: 'rahul@example.com', phone: '+91 9876543212', location: 'Bangalore, Karnataka', orders: 8, totalSpent: 3200, status: 'Blocked' },
-  { id: 'c4', name: 'Priya Singh', email: 'priya@example.com', phone: '+91 9876543213', location: 'Chennai, Tamil Nadu', orders: 2, totalSpent: 850, status: 'Active' },
-  { id: 'c5', name: 'Suresh Raina', email: 'suresh@example.com', phone: '+91 9876543214', location: 'Vizag, Andhra Pradesh', orders: 15, totalSpent: 6700, status: 'Active' },
-];
-
 const AdminCustomers: React.FC = () => {
+  const { orders } = useOrders();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,85 +43,57 @@ const AdminCustomers: React.FC = () => {
     location: ''
   });
 
-  // Load and sync with localStorage
-  React.useEffect(() => {
-    const storedUsers = localStorage.getItem('vasavi_users_db');
-    let dbUsers: any[] = [];
-    
-    if (storedUsers) {
-      dbUsers = JSON.parse(storedUsers);
-    } else {
-      // Seed with initial mock users if DB is empty
-      dbUsers = mockCustomers.map(mc => ({
-        id: mc.id,
-        name: mc.name.split(' ')[0],
-        lastName: mc.name.split(' ').slice(1).join(' '),
-        email: mc.email,
-        mobile: mc.phone,
-        address: mc.location,
-        role: 'user',
-        isBlocked: mc.status === 'Blocked',
-        ordersCount: mc.orders,
-        totalSpent: mc.totalSpent
-      }));
-      localStorage.setItem('vasavi_users_db', JSON.stringify(dbUsers));
-    }
-
-    const customersList: Customer[] = dbUsers.map((u: any) => ({
-      id: u.id,
-      name: u.name + (u.lastName ? ' ' + u.lastName : ''),
-      email: u.email,
-      phone: u.mobile || '+91 0000000000',
-      location: u.address || 'Not Provided',
-      orders: u.ordersCount || 0,
-      totalSpent: u.totalSpent || 0,
-      status: (u.isBlocked ? 'Blocked' : 'Active') as 'Active' | 'Blocked'
-    }));
-
-    setCustomers(customersList);
-  }, []);
-
-  const saveToDB = (updatedCustomers: Customer[]) => {
-    // Sync UI customers back to the underlying DB format
-    const storedUsers = localStorage.getItem('vasavi_users_db');
-    if (storedUsers) {
-      const db = JSON.parse(storedUsers);
-      
-      // Update existing users or add new ones
-      const newDB = updatedCustomers.map(c => {
-        const existing = db.find((u: any) => u.email === c.email);
-        const nameParts = c.name.split(' ');
-        
-        return {
-          id: c.id,
-          name: nameParts[0],
-          lastName: nameParts.slice(1).join(' '),
-          email: c.email,
-          mobile: c.phone,
-          address: c.location,
-          isBlocked: c.status === 'Blocked',
-          ordersCount: c.orders,
-          totalSpent: c.totalSpent,
-          role: existing ? existing.role : 'user',
-          pass: existing ? existing.pass : 'user123'
-        };
+  const fetchCustomers = async () => {
+    try {
+      const token = localStorage.getItem('vasavi_token');
+      const res = await fetch(`${API_ENDPOINTS.ADMIN}/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      localStorage.setItem('vasavi_users_db', JSON.stringify(newDB));
+      if (!res.ok) throw new Error('Failed to fetch stats');
+      const data = await res.json();
+      
+      const customersList: Customer[] = data.customers.map((c: any) => ({
+        id: c.id,
+        name: `${c.first_name} ${c.last_name || ''}`.trim(),
+        email: c.email,
+        phone: c.phone || '+91 0000000000',
+        location: c.address || 'Not Provided',
+        orders: c.orders?.length || 0,
+        totalSpent: c.totalSpent || 0,
+        status: c.role === 'blocked' ? 'Blocked' : 'Active'
+      }));
+      setCustomers(customersList);
+    } catch (err: any) {
+      console.error(err);
     }
-    setCustomers(updatedCustomers);
   };
 
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    fetchCustomers();
+  }, [orders]);
 
-  const toggleStatus = (id: string) => {
-    const updated = customers.map(c => 
-      c.id === id ? { ...c, status: (c.status === 'Active' ? 'Blocked' : 'Active') as 'Active' | 'Blocked' } : c
-    );
-    saveToDB(updated);
+  const toggleStatus = async (id: string) => {
+    const customer = customers.find(c => c.id === id);
+    if (!customer) return;
+    const isBlocked = customer.status === 'Active';
+    try {
+      const token = localStorage.getItem('vasavi_token');
+      const res = await fetch(`${API_ENDPOINTS.ADMIN}/users/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ isBlocked })
+      });
+      if (res.ok) {
+        setCustomers(prev => prev.map(c => 
+          c.id === id ? { ...c, status: isBlocked ? 'Blocked' : 'Active' } : c
+        ));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleEdit = (customer: Customer) => {
@@ -145,34 +112,58 @@ const AdminCustomers: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (customerToDelete) {
-      const updated = customers.filter(c => c.id !== customerToDelete.id);
-      saveToDB(updated);
-      setIsDeleteModalOpen(false);
-      setCustomerToDelete(null);
+      try {
+        const token = localStorage.getItem('vasavi_token');
+        const res = await fetch(`${API_ENDPOINTS.ADMIN}/users/${customerToDelete.id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setCustomers(prev => prev.filter(c => c.id !== customerToDelete.id));
+          setIsDeleteModalOpen(false);
+          setCustomerToDelete(null);
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let updated: Customer[];
-    if (editingCustomer) {
-      updated = customers.map(c => 
-        c.id === editingCustomer.id ? { ...c, ...formData } as Customer : c
-      );
-    } else {
-      const newCustomer: Customer = {
-        ...formData,
-        id: `c${Date.now()}`,
-        orders: 0,
-        totalSpent: 0,
-        status: 'Active'
-      };
-      updated = [newCustomer, ...customers];
+    try {
+      const token = localStorage.getItem('vasavi_token');
+      if (editingCustomer) {
+        const res = await fetch(`${API_ENDPOINTS.ADMIN}/users/${editingCustomer.id}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+        if (res.ok) {
+          fetchCustomers();
+        }
+      } else {
+        const res = await fetch(`${API_ENDPOINTS.ADMIN}/users`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+        if (res.ok) {
+          fetchCustomers();
+        }
+      }
+      closeModal();
+    } catch (e) {
+      console.error(e);
     }
-    saveToDB(updated);
-    closeModal();
   };
 
   const closeModal = () => {
@@ -180,6 +171,11 @@ const AdminCustomers: React.FC = () => {
     setEditingCustomer(null);
     setFormData({ name: '', email: '', phone: '', location: '' });
   };
+
+  const filteredCustomers = customers.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <AdminLayout>

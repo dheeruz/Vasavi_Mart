@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { CartItem } from './CartContext';
+import { useAuth } from './AuthContext';
 import { API_ENDPOINTS } from '../config/api';
 
 export interface OrderCustomer {
@@ -29,128 +30,144 @@ export interface Order {
   paymentMethod: string;
   status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
   history: OrderUpdate[];
+  paymentDetails?: any;
 }
 
 interface OrderContextType {
   orders: Order[];
-  placeOrder: (orderData: Omit<Order, 'id' | 'date' | 'status' | 'history'>) => string;
-  updateOrderStatus: (id: string, status: Order['status'], message?: string) => void;
-  deleteOrder: (id: string) => void;
+  placeOrder: (orderData: Omit<Order, 'id' | 'date' | 'status' | 'history'>) => Promise<string>;
+  updateOrderStatus: (id: string, status: Order['status'], message?: string) => Promise<void>;
+  deleteOrder: (id: string) => Promise<void>;
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [orders, setOrders] = useState<Order[]>(() => {
-    const savedOrders = localStorage.getItem('vasavi_orders');
-    if (savedOrders) {
-      try {
-        const parsed = JSON.parse(savedOrders);
-        if (parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Failed to parse orders', e);
-      }
-    }
-    
-    // Initial Dummy Data if empty
-    return [
-      {
-        id: 'ORD-772910',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        customer: { firstName: 'Dheeraj', lastName: 'Kumar', email: 'dheeraj@example.com', address: '123 Nellore St', city: 'Nellore', zipCode: '524001' },
-        items: [{ id: 'p1', name: 'Fresh Organic Apples', price: 180, quantity: 2, image: '/organic_apples.png', category: 'Fruits & Veggies', unit: '1 kg', inStock: true }],
-        subtotal: 360.00,
-        tax: 28.80,
-        shipping: 0,
-        total: 388.80,
-        paymentMethod: 'UPI',
-        status: 'Delivered',
-        history: [{ status: 'Pending', date: new Date(Date.now() - 172800000).toISOString(), message: 'Order Placed' }, { status: 'Delivered', date: new Date(Date.now() - 86400000).toISOString(), message: 'Delivered' }]
-      },
-      {
-        id: 'ORD-881234',
-        date: new Date().toISOString(),
-        customer: { firstName: 'Anita', lastName: 'Sharma', email: 'anita@example.com', address: '456 Jubilee Hills', city: 'Hyderabad', zipCode: '500033' },
-        items: [{ id: 'p2', name: 'Alphonso Mangoes', price: 450, quantity: 1, image: '/mango_pickle_jar_400g.png', category: 'Fruits & Veggies', unit: '1 kg', inStock: true }],
-        subtotal: 450.00,
-        tax: 36.00,
-        shipping: 50,
-        total: 536.00,
-        paymentMethod: 'Card',
-        status: 'Pending',
-        history: [{ status: 'Pending', date: new Date().toISOString(), message: 'Order Placed' }]
-      }
-    ];
-  });
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    localStorage.setItem('vasavi_orders', JSON.stringify(orders));
-  }, [orders]);
-
-  const placeOrder = (orderData: Omit<Order, 'id' | 'date' | 'status' | 'history'>) => {
-    const now = new Date().toISOString();
-    const newOrder: Order = {
-      ...orderData,
-      id: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
-      date: now,
-      status: 'Pending',
-      history: [
-        { 
-          status: 'Pending', 
-          date: now, 
-          message: 'Order placed successfully! We are preparing your items.' 
+    const fetchOrders = async () => {
+      if (!user) {
+        setOrders([]);
+        return;
+      }
+      try {
+        const token = localStorage.getItem('vasavi_token');
+        const res = await fetch(API_ENDPOINTS.ORDER, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Map backend orders back to frontend interface
+          const mappedOrders = data.map((o: any) => ({
+             id: o.id,
+             date: o.created_at,
+             customer: o.shipping_address,
+             items: (o.order_items || []).map((item: any) => ({
+                id: item.product_id,
+                name: item.name,
+                price: Number(item.price),
+                quantity: item.quantity,
+                image: item.image_url
+             })),
+             subtotal: Number(o.subtotal),
+             tax: Number(o.tax),
+             shipping: Number(o.shipping),
+             total: Number(o.total),
+             paymentMethod: o.payment_method,
+             status: o.status,
+             history: (o.order_history || []).map((h: any) => ({
+                status: h.status,
+                date: h.created_at,
+                message: h.message
+             }))
+          }));
+          setOrders(mappedOrders);
         }
-      ]
+      } catch (e) {
+        console.error('Failed to fetch orders', e);
+      }
     };
-    
-    setOrders(prev => [newOrder, ...prev]);
+    fetchOrders();
+  }, [user]);
 
-    // Trigger Notification
-    const savedProfile = localStorage.getItem('admin_profile');
-    const adminProfile = savedProfile ? JSON.parse(savedProfile) : { email: 'admin@vasavimart.com' };
-
-    fetch(`${API_ENDPOINTS.ORDER}/place-notify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        orderDetails: newOrder, 
-        adminEmail: adminProfile.email 
-      })
-    }).catch(err => console.error('Order notification failed', err));
-
-    return newOrder.id;
+  const placeOrder = async (orderData: Omit<Order, 'id' | 'date' | 'status' | 'history'>) => {
+    try {
+      const token = localStorage.getItem('vasavi_token');
+      const res = await fetch(API_ENDPOINTS.ORDER, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ orderDetails: orderData })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // Optimistic add (in real app, we might re-fetch from server)
+        const now = new Date().toISOString();
+        const newOrder: Order = {
+          ...orderData,
+          id: data.orderId,
+          date: now,
+          status: 'Pending',
+          history: [{ status: 'Pending', date: now, message: 'Order placed successfully!' }]
+        };
+        setOrders(prev => [newOrder, ...prev]);
+        return data.orderId;
+      }
+    } catch (e) {
+      console.error('Failed to place order', e);
+    }
+    return '';
   };
 
-  const updateOrderStatus = (id: string, status: Order['status'], customMessage?: string) => {
-    const now = new Date().toISOString();
-    
-    // Default messages if none provided
-    const defaultMessages: Record<Order['status'], string> = {
-      'Pending': 'Order is currently being processed.',
-      'Shipped': 'Your order has been shipped and is on its way!',
-      'Delivered': 'Order was successfully delivered at your door.',
-      'Cancelled': 'Order has been cancelled.'
-    };
-
-    setOrders(prev => 
-      prev.map(order => 
-        order.id === id 
-          ? { 
-              ...order, 
-              status, 
-              // Lazy migration for old orders that might not have history
-              history: [
-                ...(order.history || [{ status: 'Pending', date: order.date, message: 'Order Placed' }]),
-                { status, date: now, message: customMessage || defaultMessages[status] }
-              ]
-            } 
-          : order
-      )
-    );
+  const updateOrderStatus = async (id: string, status: Order['status'], customMessage?: string) => {
+    try {
+      const token = localStorage.getItem('vasavi_token');
+      await fetch(`${API_ENDPOINTS.ORDER}/${id}/status`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      
+      const now = new Date().toISOString();
+      setOrders(prev => 
+        prev.map(order => 
+          order.id === id 
+            ? { 
+                ...order, 
+                status, 
+                history: [
+                  ...(order.history || []),
+                  { status, date: now, message: customMessage || `Order status updated to ${status}` }
+                ]
+              } 
+            : order
+        )
+      );
+    } catch (e) {
+      console.error('Failed to update order status', e);
+    }
   };
 
-  const deleteOrder = (id: string) => {
-    setOrders(prev => prev.filter(order => order.id !== id));
+  const deleteOrder = async (id: string) => {
+    try {
+      const token = localStorage.getItem('vasavi_token');
+      const res = await fetch(`${API_ENDPOINTS.ORDER}/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setOrders(prev => prev.filter(order => order.id !== id));
+      }
+    } catch (e) {
+      console.error('Failed to delete order', e);
+    }
   };
 
   return (

@@ -141,7 +141,11 @@ const Checkout: React.FC = () => {
 
             const verifyResult = await verifyRes.json();
             if (verifyResult.verified) {
-              finishOrderPlacement();
+              finishOrderPlacement({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              });
             } else {
               alert('Payment Verification Failed!');
             }
@@ -175,7 +179,7 @@ const Checkout: React.FC = () => {
     }
   };
 
-  const finishOrderPlacement = async () => {
+  const finishOrderPlacement = async (paymentDetails?: any) => {
     const orderData = {
       customer: {
         firstName: formData.firstName,
@@ -190,10 +194,11 @@ const Checkout: React.FC = () => {
       tax: tax,
       shipping: shipping,
       total: finalTotal,
-      paymentMethod: paymentMethod === 'online' ? 'Razorpay' : 'Cash on Delivery'
+      paymentMethod: paymentMethod === 'online' ? 'Razorpay' : 'Cash on Delivery',
+      paymentDetails: paymentDetails || null
     };
 
-    const orderId = placeOrder(orderData);
+    const orderId = await placeOrder(orderData);
     setPlacedOrderId(orderId);
 
     // Read notification settings

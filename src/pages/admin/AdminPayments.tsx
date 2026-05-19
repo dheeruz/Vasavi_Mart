@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   CreditCard, 
   Download, 
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import StatsCard from '../../components/admin/StatsCard';
+import { useOrders } from '../../context/OrderContext';
 
 interface Transaction {
   id: string;
@@ -24,17 +25,21 @@ interface Transaction {
   status: 'Successful' | 'Pending' | 'Failed';
 }
 
-const mockTransactions: Transaction[] = [
-  { id: 'tx1', orderId: 'ord123', customer: 'Dheeraj Kumar', date: '2026-04-01T10:30:00', amount: 4500, method: 'Card', status: 'Successful' },
-  { id: 'tx2', orderId: 'ord124', customer: 'Anita Sharma', date: '2026-04-01T11:45:00', amount: 2100, method: 'COD', status: 'Pending' },
-  { id: 'tx3', orderId: 'ord125', customer: 'Rahul Verma', date: '2026-04-02T09:15:00', amount: 3200, method: 'UPI', status: 'Successful' },
-  { id: 'tx4', orderId: 'ord126', customer: 'Priya Singh', date: '2026-04-02T10:00:00', amount: 850, method: 'Card', status: 'Failed' },
-  { id: 'tx5', orderId: 'ord127', customer: 'Suresh Raina', date: '2026-04-02T11:20:00', amount: 6700, method: 'UPI', status: 'Successful' },
-];
-
 const AdminPayments: React.FC = () => {
-  const [transactions] = useState<Transaction[]>(mockTransactions);
+  const { orders } = useOrders();
   const [statusFilter, setStatusFilter] = useState('All');
+
+  const transactions = useMemo<Transaction[]>(() => {
+    return orders.map(order => ({
+      id: `tx_${order.id.replace('ORD-', '')}`,
+      orderId: order.id.replace('ORD-', ''),
+      customer: `${order.customer.firstName} ${order.customer.lastName}`,
+      date: order.date,
+      amount: order.total,
+      method: (order.paymentMethod === 'UPI' || order.paymentMethod === 'Card' ? order.paymentMethod : 'COD') as any,
+      status: order.status === 'Cancelled' ? 'Failed' : (order.status === 'Pending' ? 'Pending' : 'Successful')
+    }));
+  }, [orders]);
 
   const filteredTransactions = transactions.filter(t => 
     statusFilter === 'All' || t.status === statusFilter

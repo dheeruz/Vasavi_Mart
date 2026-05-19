@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User as UserIcon, MapPin, Package, LogOut, ChevronRight } from 'lucide-react';
+import { useWishlist } from '../../context/WishlistContext';
+import { User as UserIcon, MapPin, Package, LogOut, ChevronRight, Heart } from 'lucide-react';
 import MyOrders from './MyOrders';
+import ProductCard from '../../components/ui/ProductCard';
 import './Account.css';
 
-type AccountSection = 'profile' | 'addresses' | 'orders';
+type AccountSection = 'profile' | 'addresses' | 'orders' | 'wishlist';
 
 const Account: React.FC = () => {
   const { user, logout, updateProfile } = useAuth();
+  const { items: wishlistItems } = useWishlist();
   const [activeSection, setActiveSection] = useState<AccountSection>('profile');
   
   // Profile state
@@ -62,6 +65,24 @@ const Account: React.FC = () => {
     switch (activeSection) {
       case 'orders':
         return <MyOrders />;
+      case 'wishlist':
+        return (
+          <div className="section-content animate-fade-in">
+            <h2 className="section-title">My Wishlist ({wishlistItems.length})</h2>
+            {wishlistItems.length === 0 ? (
+              <div className="address-placeholder p-8 border-2 border-dashed border-slate-200 rounded-lg text-center text-slate-400">
+                <Heart className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                <p>Your wishlist is empty. Add items from the shop!</p>
+              </div>
+            ) : (
+              <div className="products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
+                {wishlistItems.map((prod) => (
+                  <ProductCard key={prod.id} product={prod} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
       case 'addresses':
         return (
           <div className="section-content animate-fade-in">
@@ -335,6 +356,18 @@ const Account: React.FC = () => {
             >
               <Package className="w-5 h-5 text-blue-600" />
               <span>MY ORDERS</span>
+              <ChevronRight className="w-5 h-5 ml-auto" />
+            </div>
+          </div>
+
+          <div className="menu-group">
+            <div 
+              className={`menu-header ${activeSection === 'wishlist' ? 'menu-header-active' : ''}`}
+              onClick={() => setActiveSection('wishlist')}
+              style={{cursor: 'pointer'}}
+            >
+              <Heart className="w-5 h-5 text-blue-600" />
+              <span>MY WISHLIST</span>
               <ChevronRight className="w-5 h-5 ml-auto" />
             </div>
           </div>

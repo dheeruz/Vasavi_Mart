@@ -1,7 +1,8 @@
 import React from 'react';
-import { ShoppingCart, Plus } from 'lucide-react';
+import { ShoppingCart, Plus, Heart } from 'lucide-react';
 import type { Product } from '../../types/product';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 import './ProductCard.css';
 
 interface ProductCardProps {
@@ -10,12 +11,21 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const isFav = isInWishlist(product.id);
 
   return (
     <div className="product-card animate-fade-in">
       <div className="card-image-wrapper">
         <img src={product.image} alt={product.name} className="card-image" loading="lazy" />
         <div className="card-category">{product.category}</div>
+        <button 
+          className={`wishlist-toggle-btn ${isFav ? 'active' : ''}`}
+          onClick={() => toggleWishlist(product)}
+          aria-label={isFav ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <Heart size={18} fill={isFav ? "currentColor" : "transparent"} />
+        </button>
       </div>
       <div className="card-content">
         <h3 className="card-title" title={product.name}>{product.name}</h3>

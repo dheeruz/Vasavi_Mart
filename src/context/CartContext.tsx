@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Product } from './ProductContext';
+import { useAuth } from './AuthContext';
+import { API_ENDPOINTS } from '../config/api';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -18,14 +20,53 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('vasavi_mart_cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const { user } = useAuth();
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // Load Cart
   useEffect(() => {
-    localStorage.setItem('vasavi_mart_cart', JSON.stringify(items));
-  }, [items]);
+    setIsLoaded(false);
+    if (user) {
+      const token = localStorage.getItem('vasavi_token');
+      fetch(API_ENDPOINTS.CART, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setItems(data);
+          }
+          setIsLoaded(true);
+        })
+        .catch(err => {
+          console.error('Failed to fetch cart', err);
+          setIsLoaded(true);
+        });
+    } else {
+      const savedCart = localStorage.getItem('vasavi_mart_cart');
+      setItems(savedCart ? JSON.parse(savedCart) : []);
+      setIsLoaded(true);
+    }
+  }, [user]);
+
+  // Sync Cart
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (user) {
+      const token = localStorage.getItem('vasavi_token');
+      fetch(`${API_ENDPOINTS.CART}/sync`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ cartItems: items })
+      }).catch(err => console.error('Failed to sync cart', err));
+    } else {
+      localStorage.setItem('vasavi_mart_cart', JSON.stringify(items));
+    }
+  }, [items, user, isLoaded]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setItems((prevItems) => {
