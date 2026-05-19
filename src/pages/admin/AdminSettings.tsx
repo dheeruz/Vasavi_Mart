@@ -85,9 +85,8 @@ const AdminSettings: React.FC = () => {
     setIsTesting(true);
     setToast(null);
     
-    // Timeout controller
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout is plenty since we respond fast now
 
     try {
       const response = await fetch(`${API_ENDPOINTS.NOTIFY}/test`, {
@@ -105,15 +104,16 @@ const AdminSettings: React.FC = () => {
         data = await response.json();
       }
       
-      if (response.ok && data?.success) {
-        setToast({ message: data.message || 'SMTP test email sent successfully!', type: 'success' });
+      // Accept both 200 (immediate send) and 202 (background send) as success
+      if ((response.ok || response.status === 202) && data?.success) {
+        setToast({ message: data.message || 'Test email queued! Check your inbox in ~30 seconds.', type: 'success' });
       } else {
         const errorMsg = data?.error || data?.message || `Backend Error (${response.status}). Please check your server credentials.`;
         setToast({ message: errorMsg, type: 'error' });
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        setToast({ message: 'Request timed out. The SMTP server is taking too long to respond.', type: 'error' });
+        setToast({ message: 'Request timed out. The backend may still be waking up — try again in 30 seconds.', type: 'error' });
       } else {
         setToast({ message: `Network Error: Could not connect to the backend. Please ensure the server is running.`, type: 'error' });
       }

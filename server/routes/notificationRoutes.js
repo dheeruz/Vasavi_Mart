@@ -9,31 +9,37 @@ const router = express.Router();
  */
 
 // POST /api/notify/test
-router.post('/test', async (req, res) => {
-  try {
-    const { email } = req.body;
-    // Bypass queue for direct verification of SMTP
-    const result = await mailService.sendAdminAlert(
-      'System Test', 
-      'Manually triggered system SMTP test.', 
-      `Target: ${email || 'Admin'}`,
-      '#2F8F4C', // Green for success test
-      true // bypassQueue
-    );
-    
-    if (result.success) {
-      res.status(200).json({ 
-        success: true, 
-        message: "SMTP test email sent successfully!" 
-      });
-    } else {
-      logger.error('SMTP direct send failed:', result.error);
-      throw new Error(result.error || 'Failed to send direct email');
+// Responds immediately with 202 and processes email in the background
+// to prevent SMTP timeouts from killing the request on Render.
+router.post('/test', (req, res) => {
+  const { email } = req.body;
+
+  // Respond immediately so the browser doesn't time out
+  res.status(202).json({ 
+    success: true, 
+    message: 'Test email is being sent in the background. Check your inbox in ~30 seconds.' 
+  });
+
+  // Fire-and-forget background send (does NOT block the response)
+  (async () => {
+    try {
+      logger.info(`Background SMTP test starting for: ${email || 'Admin'}...`);
+      const result = await mailService.sendAdminAlert(
+        'System Test', 
+        'Manually triggered system SMTP test from Vasavi Mart Admin.', 
+        `Target: ${email || 'Admin'} | Timestamp: ${new Date().toISOString()}`,
+        '#2F8F4C', // Green for success test
+        true // bypassQueue — send directly, not through the queue
+      );
+      if (result.success) {
+        logger.info(`Background SMTP test email sent successfully to ${email || 'Admin'}.`);
+      } else {
+        logger.error('Background SMTP test failed:', result.error);
+      }
+    } catch (err) {
+      logger.error('Background SMTP test exception:', err.stack || err.message);
     }
-  } catch (error) {
-    logger.error('Manual test route error:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
+  })();
 });
 
 // POST /api/notify/order-test
