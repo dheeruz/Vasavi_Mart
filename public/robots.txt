@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vasavi-mart-q5b1.vercel.app/sitemap.xml

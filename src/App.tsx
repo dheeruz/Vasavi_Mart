@@ -4,6 +4,7 @@ import { CartProvider } from './context/CartContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ScrollToTop from './components/layout/ScrollToTop';
+import SEOTags from './components/layout/SEOTags';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import Checkout from './pages/Checkout';
@@ -52,6 +53,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
+      <SEOTags />
       <AuthProvider>
         <ProductProvider>
           <OrderProvider>
