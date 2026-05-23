@@ -97,7 +97,7 @@ const products = [
     category: "Biscuits & Cookies",
     unit: "120 g",
     stock: 140,
-    image_url: "https://images.unsplash.com/photo-1558961317-19439243730c?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -141,7 +141,7 @@ const products = [
     category: "Energy Drinks",
     unit: "250 ml",
     stock: 180,
-    image_url: "https://images.unsplash.com/photo-1622543956221-a596e9f482be?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -174,7 +174,7 @@ const products = [
     category: "Instant Foods",
     unit: "4 Pack",
     stock: 300,
-    image_url: "https://images.unsplash.com/photo-1612966608967-3dd2a49aa11d?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1612927601601-6638404737ce?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -185,7 +185,7 @@ const products = [
     category: "Noodles & Pasta",
     unit: "500 g",
     stock: 120,
-    image_url: "https://images.unsplash.com/photo-1621961424579-f1555366113f?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1608897013039-887f21d8c804?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -196,7 +196,7 @@ const products = [
     category: "Ready-to-Cook Foods",
     unit: "500 g",
     stock: 90,
-    image_url: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -251,7 +251,7 @@ const products = [
     category: "Eggs & Poultry",
     unit: "1 Pack",
     stock: 140,
-    image_url: "https://images.unsplash.com/photo-1516448424440-9dbca97779c1?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1587486913049-53fc88980cfc?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -306,7 +306,7 @@ const products = [
     category: "Baby Care",
     unit: "Pack of 80",
     stock: 80,
-    image_url: "https://images.unsplash.com/photo-1522850959516-58f958d610f1?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -328,7 +328,7 @@ const products = [
     category: "Household Essentials",
     unit: "500 ml",
     stock: 200,
-    image_url: "https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -482,7 +482,7 @@ const products = [
     category: "Ice Cream & Desserts",
     unit: "100 ml",
     stock: 190,
-    image_url: "https://images.unsplash.com/photo-1501443715940-a53b6897f17a?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -515,7 +515,7 @@ const products = [
     category: "Combo Offers",
     unit: "1 Combo",
     stock: 60,
-    image_url: "https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
@@ -537,7 +537,7 @@ const products = [
     category: "New Arrivals",
     unit: "90 g",
     stock: 110,
-    image_url: "https://images.unsplash.com/photo-1571244856341-4f3dd95db36e?auto=format&fit=crop&q=80&w=600",
+    image_url: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=600",
     in_stock: true
   },
   {
