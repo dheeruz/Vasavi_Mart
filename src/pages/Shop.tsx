@@ -4,25 +4,22 @@ import ProductCard from '../components/ui/ProductCard';
 import { useProducts } from '../context/ProductContext';
 import './Shop.css';
 
-const categories = [
-  'All', 
-  'Fruits & Veggies', 
-  'Food Staples', 
-  'Dairy & Refrigerated', 
-  'Snacks & Packaged Foods', 
-  'Household Essentials', 
-  'Personal Care', 
-  'Beverages'
-];
-
 const Shop: React.FC = () => {
   const { products } = useProducts();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Dynamically compute unique categories from the database products list
+  const categories = React.useMemo(() => {
+    const list = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+    list.sort((a, b) => a.localeCompare(b));
+    return ['All', ...list];
+  }, [products]);
+
   const filteredProducts = products.filter(product => {
     const matchesCategory = activeCategory === 'All' || product.category === activeCategory;
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (product.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 

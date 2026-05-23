@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useProducts } from '../../context/ProductContext';
+import { GROCERY_CATEGORIES } from '../../config/categories';
 
 const AdminProducts: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
@@ -20,7 +21,7 @@ const AdminProducts: React.FC = () => {
   const [formData, setFormData] = useState<any>({
     name: '',
     price: 0,
-    category: 'Fruits & Veggies',
+    category: GROCERY_CATEGORIES[0],
     description: '',
     unit: '1 kg',
     inStock: true,
@@ -219,15 +220,11 @@ const AdminProducts: React.FC = () => {
                         required 
                         value={formData.category} 
                         onChange={(e) => setFormData({...formData, category: e.target.value})}
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--admin-border)', padding: '10px', borderRadius: '8px', color: 'white', width: '100%' }}
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--admin-border)', padding: '10px', borderRadius: '8px', color: 'white', width: '100%', colorScheme: 'dark' }}
                       >
-                         <option value="Fruits & Veggies">Fruits & Veggies</option>
-                         <option value="Food Staples">Food Staples</option>
-                         <option value="Dairy & Refrigerated">Dairy & Refrigerated</option>
-                         <option value="Snacks & Packaged Foods">Snacks & Packaged Foods</option>
-                         <option value="Household Essentials">Household Essentials</option>
-                         <option value="Personal Care">Personal Care</option>
-                         <option value="Beverages">Beverages</option>
+                         {GROCERY_CATEGORIES.map(cat => (
+                           <option key={cat} value={cat}>{cat}</option>
+                         ))}
                       </select>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

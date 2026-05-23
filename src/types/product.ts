@@ -11,4 +11,8 @@ export interface Product {
   stock?: number;
   inStock: boolean;
   unit: string;
+  discount?: number;
+  isOrganic?: boolean;
+  isBestseller?: boolean;
+  isNewArrival?: boolean;
 }

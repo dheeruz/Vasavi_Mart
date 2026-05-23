@@ -6,7 +6,7 @@ const SEOTags = () => {
 
   useEffect(() => {
     const getPageTitle = (path: string) => {
-      const baseTitle = 'Vasavi Mart - Online Grocery & Daily Essentials';
+      const baseTitle = 'Vasavi Mart - Fresh Groceries, Daily Essentials & Household Products Online';
       
       switch (path) {
         case '/':
